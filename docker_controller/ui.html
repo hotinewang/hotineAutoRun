@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DockerControler</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #343a40;
+        }
+        .control-bar {
+            margin-bottom: 40px;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .status-bar {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        form {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        select, input, button {
+            margin: 0 10px;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ced4da;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>DockerControler</h1>
+    <div class="control-bar">
+        <form id="controlForm">
+            容器
+            <select id="containerSelect">
+                <option value="firefox">firefox</option>
+                <option value="vscode">vscode</option>
+                <option value="jellyfin">jellyfin</option>
+            </select>
+            在
+            <input type="text" id="timeInput" placeholder="时间(单位：分钟)">
+            后
+            <select id="actionSelect">
+                <option value="stop">关闭</option>
+                <option value="start">启动</option>
+                <option value="restart">重启</option>
+            </select>
+            <button type="button" onclick="executeAction()">执行</button>
+        </form>
+    </div>
+    <div class="status-bar">
+        <canvas id="memoryUsageChart"></canvas>
+    </div>
+
+    <script>
+        const container_mem_use = [["firefox", 0.13], ["vscode", 0.11], ["jellyfin", 0.9], ["example1", 0.2], ["example2", 0.35]];
+
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = 'rgba(';
+            for (let i = 0; i < 3; i++) {
+                let part = '';
+                for (let j = 0; j < 2; j++) {
+                    part += letters[Math.floor(Math.random() * 16)];
+                }
+                color += parseInt(part, 16) + ', ';
+            }
+            color += '0.6)';
+            return color;
+        }
+
+        function generateColors(data) {
+            return data.map(() => getRandomColor());
+        }
+
+        function drawStatusBar() {
+            const ctx = document.getElementById('memoryUsageChart').getContext('2d');
+            const colors = generateColors(container_mem_use);
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: container_mem_use.map(item => item[0]),
+                    datasets: [{
+                        label: '内存使用率',
+                        data: container_mem_use.map(item => item[1] * 100),
+                        backgroundColor: colors,
+                        borderColor: colors.map(color => color.replace('0.6', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 10
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += context.parsed.toFixed(2) + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'end',
+                            formatter: function(value, context) {
+                                return context.dataset.labels[context.dataIndex] + ': ' + value.toFixed(2) + '%';
+                            },
+                            color: '#343a40',
+                            font: {
+                                weight: 'bold'
+                            }
+                        }
+                    }
+                },
+                plugins: [ChartDataLabels]
+            });
+        }
+
+        function updateChartData(newData) {
+            const chart = Chart.instances[document.getElementById('memoryUsageChart')._chartjs.chart.id];
+            chart.data.labels = newData.map(item => item[0]);
+            chart.data.datasets[0].data = newData.map(item => item[1] * 100);
+            chart.data.datasets[0].backgroundColor = generateColors(newData);
+            chart.data.datasets[0].borderColor = generateColors(newData).map(color => color.replace('0.6', '1'));
+            chart.update();
+        }
+
+        function executeAction() {
+            const container = document.getElementById('containerSelect').value;
+            const action = document.getElementById('actionSelect').value;
+            const time = document.getElementById('timeInput').value;
+            alert(`将在${time}后对${container}执行${action}操作`);
+            // Here you would add the actual logic to control Docker containers
+            // For demonstration, let's simulate changing the data
+            const randomizeData = () => container_mem_use.map(item => [item[0], Math.random()]);
+            updateChartData(randomizeData());
+        }
+
+        // Initial draw of the status bar
+        drawStatusBar();
+    </script>
+</body>
+</html>
