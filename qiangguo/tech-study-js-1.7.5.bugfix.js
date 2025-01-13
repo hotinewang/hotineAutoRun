@@ -464,7 +464,7 @@ async function getNewsList() {
         // 请求成功
         if (res.ok) {
             const data = await res.json();
-            log("获取文章列表json成功getNewsList()")
+            log("获取文章列表json成功getNewsList()" + API_CONFIG.todayNews[randNum]);
             return data;
         }
     }
@@ -486,7 +486,7 @@ async function getVideoList() {
         // 请求成功
         if (res.ok) {
             const data = await res.json();
-            log("获取视频列表json成功getVideoList()")
+            log("获取视频列表json成功getVideoList()" + API_CONFIG.todayVideos[randNum]);
             return data;
         }
     }
@@ -4188,20 +4188,35 @@ async function getNews() {
     if (data && data.length) {
         // 索引
         let i = 0;
+        // 循环计数，防止死循环
+        let j = 0;
         // 最新新闻
         const latestItems = data.slice(0, 100);
+
+        /*
         // 当前年份
-        //const currentYear = new Date().getFullYear().toString();
-        //5天前的年份。（直接使用当前年份会有BUG，年初时，如果本年级视频特别少，本段代码会进入死循环）//=========================================================
-        const currentYear = (new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)).getFullYear();//=========================================================
+        const currentYear = new Date().getFullYear().toString();
         // 查找今年新闻
-        while (i < need && j < 500) {//=========================================================
-            j++;//防止死循环//=========================================================
+        while (i < need && j < 500) {
+            j++;//防止死循环
             const randomIndex = ~~(Math.random() * latestItems.length);
             // 新闻
             const item = latestItems[randomIndex];
             // 是否存在
             if (item.publishTime.startsWith(currentYear) && item.type === 'tuwen') {
+                news[i] = item;
+                i++;
+            }
+        }*/
+
+        // 查找今年新闻
+        while (i < need && j < 500) {
+            j++;//防止死循环
+            const randomIndex = ~~(Math.random() * latestItems.length);
+            // 新闻
+            const item = latestItems[randomIndex];
+            // 是否存在
+            if (item.type === 'tuwen') {
                 news[i] = item;
                 i++;
             }
@@ -4225,21 +4240,36 @@ async function getVideos() {
     if (data && data.length) {
         // 索引
         let i = 0;
+        // 循环计数，防止死循环
+        let j = 0;
         // 最新视频，获取前100个
         const latestItems = data.slice(0, 100);
-        // 当前年份
-        //const currentYear = new Date().getFullYear().toString();
-        //5天前的年份。（直接使用当前年份会有BUG，年初时，如果本年级视频特别少，本段代码会进入死循环）====================================================
-        const currentYear = (new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)).getFullYear();//=========================================================
+
+        /*
+        // 当前年份.会有BUG，年初时，如果本年级视频特别少，本段代码会一直返回空数组，无法完成视频学习
+        const currentYear = new Date().getFullYear().toString();
         // 从列表里前100个视频中查找今年的need个视频
-        while (i < need && j < 500) {//=========================================================
-            j++;//防止死循环//=========================================================
+        while (i < need && j < 500) {
+            j++;//防止死循环
             const randomIndex = ~~(Math.random() * latestItems.length);
             // 新闻
             const item = latestItems[randomIndex];
             // 是否存在
             if (item.publishTime.startsWith(currentYear) &&
                 (item.type === 'shipin' || item.type === 'juji')) {
+                videos[i] = item;
+                i++;
+            }
+        }
+        */
+
+        while (i < need && j < 500) {
+            j++;//防止死循环
+            const randomIndex = ~~(Math.random() * latestItems.length);
+            // 新闻
+            const item = latestItems[randomIndex];
+            // 是否存在
+            if ((item.type === 'shipin' || item.type === 'juji')) {
                 videos[i] = item;
                 i++;
             }
