@@ -1,11 +1,17 @@
 /**
+ * 功能，把Obsidain的MD文件，批量转换成Hugo博客格式的MD文件
+ * 图片，全部更换链接
+ * md引用，全部替换成html的url
+ * 封面图（如有）全部更新链接
+ * categories如果缺失，则根据md文件所在的文件夹命名categories
+ * 
  * npm install gray-matter
  */
 // 常量定义
-const OBSIDIAN_PATH = '/home/coder/project/hotineAutoRun/Obs2Hugo/obsidian'; // Obsidian的根目录
-const HUGO_PATH = '/home/coder/project/hotineAutoRun/Obs2Hugo/hugo'; // Hugo的根目录
-const HUGO_STATIC_PATH = '/static/blog';//static文件夹下附件目录
-const HUGO_POSTS_PATH = '/content/posts';//博客文件夹
+const OBSIDIAN_PATH = 'Y:\\documents\\notes'; // Obsidian的根目录
+const HUGO_PATH = 'D:\\Github\\hotineblog\\构建blog'; // Hugo的根目录
+const HUGO_STATIC_PATH = '\\static\\blog';//static文件夹下附件目录
+const HUGO_POSTS_PATH = '\\content\\posts';//博客文件夹
 const HUGO_TAG = 'blog'; // 标记需要转换的文章的标签
 
 // 引入必要的模块
@@ -23,8 +29,14 @@ let fileListData = [];
 function traverseDirectory(dirPath) {
     const files = fs.readdirSync(dirPath);
     files.forEach(file => {
+        // 检查文件名是否以点开头
+        if (file.startsWith('.')) {
+            return; // 如果是隐藏文件或文件夹，跳过
+        }
+
         const filePath = path.join(dirPath, file);
         const fileStat = fs.statSync(filePath);
+
         if (fileStat.isDirectory()) {
             traverseDirectory(filePath);
         } else {
@@ -33,9 +45,8 @@ function traverseDirectory(dirPath) {
                 ext: path.extname(file).toLowerCase(),
                 obs_path: filePath,
                 hugo_path: ""
-
             });
-            console.log("遍历-", file)
+            console.log("遍历-", file);
         }
     });
 }
@@ -68,8 +79,19 @@ function copyFile(oldPath, newPath) {
 }
 
 /**
+ * 把路径中的\都换成/
+ * @param {*} filePath 
+ * @returns 
+ */
+function path2url(filePath) {
+    return filePath.replace(/\\/g, '/');
+}
+
+/**
  * 修改文章附件连接为HUGO标准链接：![备注]{链接}
  * 同时把连接中的md文件修改为对应的html文件
+ * ==================================================有未完善的BUG=============================================
+ * 目前除了md文件输出[xx]{url}，默认都作为图片文件输出成了![xx]{url}的格式。
  * @param {*} match 原始链接内容
  * @param {*} altText 连接中的提示词
  * @param {*} url 连接中的url
@@ -94,26 +116,31 @@ function fixMDContent(match, altText, url) {
             if (obj.hugo_path === "") {
                 if (path.extname(url) === ".md") {
                     obj.hugo_path = obj.obs_path.replace(OBSIDIAN_PATH, path.join(HUGO_PATH + HUGO_POSTS_PATH));
-                    obj.hugo_path = obj.hugo_path.replace(/\.md$/, ".html");
+                    //文件名全部转换成小写并且移除标点符号
+                    let n = obj.name;
+                    obj.hugo_path = obj.hugo_path.replace(n, "");
+                    n = n.replace(/\.md$/, "");
+                    n = n.replace(/[.,!?;:'"(){}[\]<>/?！，。？；：“”‘’（）【】《》、|]/g, '');
+                    obj.hugo_path = path.join(obj.hugo_path, n);
                     //返回对应的html url
-                    return `![${altText}](${obj.hugo_path.replace(path.join(HUGO_PATH, "content"), "")})`;
+                    return `[${altText}](${path2url(obj.hugo_path.replace(path.join(HUGO_PATH, "content"), "")).toLowerCase()})`;
                 } else {
                     obj.hugo_path = obj.obs_path.replace(OBSIDIAN_PATH, path.join(HUGO_PATH + HUGO_STATIC_PATH));
                     //console.log("新路径",obj.hugo_path)
                     copyFile(obj.obs_path, obj.hugo_path);
                     //返回修改后的MD链接
-                    return `![${altText}](${obj.hugo_path.replace(path.join(HUGO_PATH, "static"), "")})`;
+                    return `![${altText}](${path2url(obj.hugo_path.replace(path.join(HUGO_PATH, "static"), ""))})`;
                 }
-                
-            }else{
+
+            } else {
                 if (path.extname(url) === ".md") {
-                    return `![${altText}](${obj.hugo_path.replace(path.join(HUGO_PATH, "content"), "")})`;
+                    return `[${altText}](${path2url(obj.hugo_path.replace(path.join(HUGO_PATH, "content"), "")).toLowerCase()})`;
                 } else {
-                    return `![${altText}](${obj.hugo_path.replace(path.join(HUGO_PATH, "static"), "")})`;
+                    return `![${altText}](${path2url(obj.hugo_path.replace(path.join(HUGO_PATH, "static"), ""))})`;
                 }
             }
         } else {
-            //如果附件中指定的文件不存在，则返回一个错误提示链接
+            //如果附件中指定的文件不存在，则返回原始链接（一定要返回原始链接，防止误识别附件）
             console.log(`【E】附件不存在：${url}`);
             return match;
         }
@@ -152,46 +179,39 @@ function convertMarkdownFiles() {
                     return fixMDContent(match, altText, url);
                 });
 
-                // 生成文章封面图(使用文章中第一个图片)
-                if (data.featuredImage && data.featuredImage != "") {
-                    //直接把本文的第一个图片作为封面图即可png jpg jpeg svg bmp
-                    // 定义正则表达式匹配 [xxx](xxxxx.jpg) 格式
-                    const regex = /\[(.*?)\]\((.*?)\)/g;
-                    let match;
-                    let imageUrl = "";
-
-                    // 使用正则表达式循环匹配
-                    while ((match = regex.exec(newContent)) !== null) {
-                        // match[2] 是捕获组中的图片地址
-                        imageUrl = match[2];
-                        // 检查是否是图片格式（简单检查文件扩展名）
-                        if (imageUrl.toLowerCase().endsWith(".jpg")
-                            || imageUrl.toLowerCase().endsWith(".png")
-                            || imageUrl.toLowerCase().endsWith(".jpeg")
-                            || imageUrl.toLowerCase().endsWith(".gif")
-                            || imageUrl.toLowerCase().endsWith(".svg")
-                            || imageUrl.toLowerCase().endsWith(".webp")
-                            || imageUrl.toLowerCase().endsWith(".bmp")) {
-                            data.featuredImage = imageUrl;
-                            //console.log(`设置封面图：${data.featuredImage}`);
-                            break;
-                        }
+                // 处理文章封面图（null=有featuredImage属性但是为空，undefined=未设置featuredImage属性）
+                // 如果指定了封面
+                if (!(typeof data.featuredImage==='undefined') && !(data.featuredImage === null)) {
+                    let f = fixMDContent("", "", data.featuredImage);
+                    let url = f.match(/\!\[.*?\]\((.*?)\)/);
+                    if (url && url[1]) {
+                        data.featuredImage = url[1];
                     }
+                } else if (!(data.featuredImage === null)) {
+                    //如果无封面设置，则自动生成一个封面图
+                    const match = newContent.match(/\!\[.*?\]\((.*?)\)/);
+
+                    // 如果匹配成功，返回第一个图片的 URL
+                    if (match && match[1]) {
+                        data.featuredImage= match[1];
+                    }
+
                 }
 
                 //为文章生成categories
                 //如果文章没有指定categories
-                if (!data.categories) {
-                    let c=fileInfo.obs_path.replace(OBSIDIAN_PATH,"")
+                if (!data.categories || data.categories === "" || data.categories.length == 0) {
+                    let c = path2url(fileInfo.obs_path.replace(OBSIDIAN_PATH, ""));
+
                     let cat = c.match(/[^/]+(?=\/[^/]+$)/)[0];
-                    data.categories=[cat];
+                    data.categories = [cat];
                 }
 
                 // 生成新的Markdown文件内容
                 const newFileContent = matter.stringify(newContent, data);
 
                 // 创建Hugo内容目录
-                const newDirPath = path.join(HUGO_PATH+HUGO_POSTS_PATH, path.dirname(fileInfo.obs_path.replace(OBSIDIAN_PATH,"")));
+                const newDirPath = path.join(HUGO_PATH + HUGO_POSTS_PATH, path.dirname(fileInfo.obs_path.replace(OBSIDIAN_PATH, "")));
                 if (!fs.existsSync(newDirPath)) {
                     fs.mkdirSync(newDirPath, { recursive: true });
                 }
