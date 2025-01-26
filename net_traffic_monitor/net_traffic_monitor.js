@@ -39,7 +39,6 @@ function readNetworkStats() {
             if (interfaceName != netName)
                 continue;
             result.push([interfaceName, parseInt(parts[1]), parseInt(parts[9])]);
-
         }
     }
     return result;

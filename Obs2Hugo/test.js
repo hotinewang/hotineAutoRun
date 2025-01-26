@@ -1,0 +1,1 @@
+console.log("当前文件所在的目录路径是:", __dirname);
