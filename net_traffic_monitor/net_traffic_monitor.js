@@ -5,6 +5,8 @@
  * 定位到脚本目录下安装执行：
  * npm install schedule
  * 
+ * 如需持久化运行，可以定位到脚本目录，使用 forever start 文件名.js
+ * 
  * v2025-01-21
 */
 
@@ -12,7 +14,7 @@ const fs = require('fs');
 const path = require('path');
 const schedule = require('node-schedule')
 //要监控的网络名称
-const netName = "eth0";
+const netName = "eth0";//BWG是 ens18
 
 /**
  * 分析各网络接口的上下行流量
@@ -130,54 +132,6 @@ function calculateDailyTraffic() {
 }
 
 
-/**
- * 发送推送消息到ntfy服务
- * @param {string} topic - 消息的主题（必填）
- * @param {string} message - 要发送的消息内容（必填）
- * @param {string} title - 消息的大标题(默认不使用大标题)
- * @param {int} [priority=3] - 消息的优先级（默认是3），可以是1-5的整数，分别是最小、小、默认、大、最大
- * @param {array} [tags] - 消息的标签,字符串数组（默认无）
- * @param {array} [attach] - 附件、图片URL（默认无）
- * @param {array} [click] - 消息被点击时跳转的url（默认无）
- * @param {string} [serverUrl='https://ntfy.sh'] - ntfy服务的URL,默认为官方服务器
- */
-async function sendNtfyMessage(topic, message, title = null, priority = 3, tags = null, attach = null, click = null, serverUrl = 'https://ntfy.sh') {
-    try {
-        if (topic == null || message == null || priority > 5 || priority < 1) {
-            console.error("topic、message不能为空，priority的值只能取1、2、3、4、5!");
-        }
-
-        // 构建请求的headers
-        const headers = new Headers({
-            'Content-Type': 'application/json',
-        });
-
-        // 创建消息Object
-        const payload = { topic, message, priority };
-        if (title) payload.title = title;
-        if (tags) payload.tags = tags;
-        if (attach) payload.attach = attach;
-        if (click) payload.click = click;
-
-        // 构建请求的body
-        const body = JSON.stringify(payload);
-        console.log('拟发出的消息body:', body);
-
-        // 发送POST请求到ntfy服务
-        const response = await fetch(serverUrl, { method: 'POST', headers: headers, body: body });
-
-        // 检查响应状态
-        if (!response.ok) {
-            throw new Error(`HTTP 错误! 状态: ${response.status}`);
-        }
-
-        // 获取响应数据
-        const data = await response.json();
-        console.log('消息发送成功:\n', data);
-    } catch (error) {
-        console.error('消息发送失败:\n', error);
-    }
-}
 
 /**
  * 发送推送消息到ntfy服务
@@ -245,9 +199,12 @@ function main() {
 
     //生成报告
     let report = '';
-    report += `🌐${new Date().getDate()}日累计流量:\n 上 ${bytesToMB(traffic.todaySent)} Mb, 下 ${bytesToMB(traffic.todayReceived)} Mb, 共计${bytesToMB(traffic.todaySent + traffic.todayReceived)}Mb\n`;
-    report += `🌐自28日起累计流量:\n 上 ${bytesToMB(traffic.monthlySent)} Mb, 下 ${bytesToMB(traffic.monthlyReceived)} Mb, 共计${bytesToMB(traffic.monthlySent + traffic.monthlyReceived)}Mb`;
+    report += `🌐${new Date().toISOString().slice(8, 10)}日累计流量:\n 上 ${bytesToMB(traffic.todaySent)} Mb, 下 ${bytesToMB(traffic.todayReceived)} Mb, 共计${bytesToMB(traffic.todaySent + traffic.todayReceived)}Mb\n`;
+    report += `🌐自28日起累计流量:\n 上 ${bytesToMB(traffic.monthlySent)} Mb, 下 ${bytesToMB(traffic.monthlyReceived)} Mb, 共计${bytesToMB(traffic.monthlySent + traffic.monthlyReceived)}Mb\n`;
+    report += `🌐本月用量:\n ${Math.round(bytesToMB(traffic.monthlySent + traffic.monthlyReceived)/1048576*1000)/100}%`;
     console.log(report);
+    //日终总结：
+    
     //日流量超过1000MB发送消息提示
     if(bytesToMB(traffic.todaySent + traffic.todayReceived)>1000)
     {
@@ -257,6 +214,5 @@ function main() {
 
 
 main();
-
-schedule.scheduleJob("10 * * * *", main
-)
+/*每个小时的01分执行一次 */
+schedule.scheduleJob("1 * * * *", main) 
