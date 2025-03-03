@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kimi Free API Chat (SSE Stream with ID Extraction)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        .response {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            white-space: pre-wrap; /* 保留换行符 */
+        }
+    </style>
+</head>
+<body>
+    <h1>Kimi Free API Chat (SSE Stream with ID Extraction)</h1>
+    <textarea id="userInput" placeholder="在这里输入你的问题..."></textarea>
+    <button id="sendButton">发送消息</button>
+    <div class="response" id="responseArea"></div>
+
+    <script>
+        // 替换为你的refresh_token
+        const refreshToken = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ1c2VyLWNlbnRlciIsImV4cCI6MTc0MjcxNzQ5MCwiaWF0IjoxNzM0OTQxNDkwLCJqdGkiOiJjdGtobWNtMjlvazA3NDBsZWRzMCIsInR5cCI6InJlZnJlc2giLCJhcHBfaWQiOiJraW1pIiwic3ViIjoiY21xaTF0MDNyMDdjanNsazV2NzAiLCJzcGFjZV9pZCI6ImNtcWkxdDAzcjA3Y2pzbGs1djZnIiwiYWJzdHJhY3RfdXNlcl9pZCI6ImNtcWkxdDAzcjA3Y2pzbGs1djYwIiwicm9sZXMiOlsidmlkZW9fZ2VuX2FjY2VzcyJdfQ._jyGMQp1WrUIQSxYIFF-6DmL9dGhIm_Af3dqep_mxYA0rqfLokCJ_F9-3Ez7I7gnJ47ff-BEdT9c22gDYSjQbg";
+
+        document.getElementById('sendButton').addEventListener('click', sendMessage);
+
+        async function sendMessage() {
+            const userInput = document.getElementById('userInput').value.trim();
+            if (!userInput) {
+                alert("请输入消息！");
+                return;
+            }
+
+            const responseArea = document.getElementById('responseArea');
+            responseArea.innerHTML = "正在加载...";
+
+            const apiUrl = "http://192.168.193.29:7086/v1/chat/completions"; // 替换为你的API地址
+            const payload = {
+                model: "kimi", // 使用默认模型
+                messages: [
+                    {
+                        role: "user",
+                        content: userInput
+                    }
+                ],
+                use_search: true, // 开启联网搜索
+                stream: true // 使用SSE流式输出
+            };
+
+            try {
+                // 使用fetch发送请求并保持连接
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${refreshToken}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API请求失败，状态码：${response.status}`);
+                    responseArea.innerHTML += `API请求失败，状态码：${response.status}`;
+                }
+
+                // 使用SSE流式接收数据
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                responseArea.innerHTML = ""; // 清空响应区域
+                let accumulatedData = "";
+                let conversationId = null; // 用于存储 conversation_id
+
+                reader.read().then(function processText({done, value}) {
+                    if (done) {
+                        // 流结束时，尝试提取 conversation_id
+                        try {
+                            const finalData = JSON.parse(accumulatedData);
+                            conversationId = finalData.id; // 提取 id
+                        } catch (e) {
+                            console.error("解析最终数据失败:", e);
+                        }
+
+                        responseArea.innerHTML += `<br><strong>流结束，显示最终结果</strong>`;
+                        responseArea.innerHTML += accumulatedData; // 显示最终结果
+                        responseArea.innerHTML += `<br><strong>流结束,获取Conversation ID。</strong>`;
+                        responseArea.innerHTML += `<br><strong>Conversation ID: ${conversationId}</strong>`; // 显示 conversation_id
+                        return;
+                    }
+
+                    // 解码并处理数据
+                    const chunk = decoder.decode(value, {stream: true});
+                    console.log("解析："+chunk);//chunk应该是个字符串，需要转换成json
+                    //accumulatedData += chunk.data//.choices[0].delta.content;
+
+                    // 实时更新响应区域
+                    //responseArea.innerHTML += chunk.data//.choices[0].delta.content;
+
+                    return reader.read().then(processText);
+                });
+            } catch (error) {
+                responseArea.innerHTML = `<strong>错误：</strong><br>${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -14,7 +14,7 @@ const fs = require('fs');
 const path = require('path');
 const schedule = require('node-schedule')
 //要监控的网络名称
-const netName = "eth0";//BWG是 ens18
+const netName = "eth0";//BWG是ens18
 
 /**
  * 分析各网络接口的上下行流量
@@ -99,14 +99,18 @@ function calculateDailyTraffic() {
         console.log("=",lastReceived - firstReceived, lastSent - firstSent);*/
     }
 
-    const nowDate = new Date()
-    //获取最近的一个28号的日期
-    const targetDay = new Date(nowDate.getFullYear(), nowDate.getMonth(), 28);
-    if (targetDay > nowDate) targetDay.setMonth(targetDay.getMonth() - 1);
+    const nowDate = new Date()//当前日期
+    const targetDay = new Date(Date.UTC(nowDate.getFullYear(), nowDate.getMonth(), 28));//本月的28日(UTC时间)
+    //获取今日是几号
+    const isoDay = nowDate.toISOString().split("T")[0].split("-")[2]; // 获取当前ISO 格式日期（天）
+    //如果今天大于等于28号，则上一个28号是本月28号；否则上一个28号是上月的28号
+    if(isoDay<28){
+        targetDay.setMonth(targetDay.getMonth() - 1);
+    }
 
     //获取最近一个28日的全天的log
     logEntries = fs.readFileSync(logFilePath(), 'utf-8').split('\n').filter(line => line.startsWith(targetDay.toISOString().substring(0, 10)));
-
+    //console.log(`临时测试：${targetDay.toISOString().substring(0, 10)}`);
     //
     if (logEntries.length != 0) {
         //获取第一条log
@@ -199,9 +203,9 @@ function main() {
 
     //生成报告
     let report = '';
-    report += `🌐${new Date().toISOString().slice(8, 10)}日累计流量:\n 上 ${bytesToMB(traffic.todaySent)} Mb, 下 ${bytesToMB(traffic.todayReceived)} Mb, 共计${bytesToMB(traffic.todaySent + traffic.todayReceived)}Mb\n`;
-    report += `🌐自28日起累计流量:\n 上 ${bytesToMB(traffic.monthlySent)} Mb, 下 ${bytesToMB(traffic.monthlyReceived)} Mb, 共计${bytesToMB(traffic.monthlySent + traffic.monthlyReceived)}Mb\n`;
-    report += `🌐本月用量:\n ${Math.round(bytesToMB(traffic.monthlySent + traffic.monthlyReceived)/1048576*1000)/100}%`;
+    report += `🌐${new Date().toISOString().slice(5, 10)}日累计流量:\n 上 ${bytesToMB(traffic.todaySent)} Mb, 下 ${bytesToMB(traffic.todayReceived)} Mb, 共计${bytesToMB(traffic.todaySent + traffic.todayReceived)}Mb\n`;
+    report += `🌐自上个28日起累计流量:\n 上 ${bytesToMB(traffic.monthlySent)} Mb, 下 ${bytesToMB(traffic.monthlyReceived)} Mb, 共计${bytesToMB(traffic.monthlySent + traffic.monthlyReceived)}Mb\n`;
+    report += `🌐本月流量已用:\n ${Math.round(bytesToMB(traffic.monthlySent + traffic.monthlyReceived)/1048576*1000)/100}%`;
     console.log(report);
     //日终总结：
     

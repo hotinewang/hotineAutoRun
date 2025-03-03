@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kimi Free API Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+
+        .response {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Kimi Free API Chat</h1>
+    <textarea id="userInput" placeholder="在这里输入你的问题..."></textarea>
+    <button id="sendButton">发送消息</button>
+    <div class="response" id="responseArea"></div>
+
+    <script>
+        // 替换为你的refresh_token
+        const refreshToken = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ1c2VyLWNlbnRlciIsImV4cCI6MTc0MjcxNzQ5MCwiaWF0IjoxNzM0OTQxNDkwLCJqdGkiOiJjdGtobWNtMjlvazA3NDBsZWRzMCIsInR5cCI6InJlZnJlc2giLCJhcHBfaWQiOiJraW1pIiwic3ViIjoiY21xaTF0MDNyMDdjanNsazV2NzAiLCJzcGFjZV9pZCI6ImNtcWkxdDAzcjA3Y2pzbGs1djZnIiwiYWJzdHJhY3RfdXNlcl9pZCI6ImNtcWkxdDAzcjA3Y2pzbGs1djYwIiwicm9sZXMiOlsidmlkZW9fZ2VuX2FjY2VzcyJdfQ._jyGMQp1WrUIQSxYIFF-6DmL9dGhIm_Af3dqep_mxYA0rqfLokCJ_F9-3Ez7I7gnJ47ff-BEdT9c22gDYSjQbg";
+
+        var conversation_id = "none"
+
+        document.getElementById('sendButton').addEventListener('click', sendMessage);
+
+        async function sendMessage() {
+            const userInput = document.getElementById('userInput').value.trim();
+            if (!userInput) {
+                alert("请输入消息！");
+                return;
+            }
+
+            const responseArea = document.getElementById('responseArea');
+            responseArea.innerHTML = "正在加载...";
+
+            const apiUrl = "http://192.168.193.29:7086/v1/chat/completions"; // 替换为你的API地址
+            const payload = {
+                model: "kimi-search", // 使用默认模型
+                "conversation_id": conversation_id,//会话ID，首轮必须传入none。
+                messages: [
+                    {
+                        role: "user",
+                        content: userInput
+                    }
+                ],
+                use_search: true, // 开启联网搜索
+                stream: false // 不使用流式输出
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${refreshToken}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API请求失败，状态码：${response.status}`);
+                }
+
+                const data = await response.json();
+                const assistantResponse = data.choices[0].message.content;
+                conversation_id = data.id;
+
+                responseArea.innerHTML = `<strong>助手：</strong><br>${assistantResponse}`;
+            } catch (error) {
+                responseArea.innerHTML = `<strong>错误：</strong><br>${error.message}`;
+            }
+        }
+    </script>
+</body>
+
+</html>
