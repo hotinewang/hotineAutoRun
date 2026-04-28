@@ -1,0 +1,255 @@
+<!--v20260428-->
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker 管理面板</title>
+    <style>
+        :root {
+            --primary: #2196f3;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --dark: #333;
+            --grey: #999;
+            --header-bg: #f8f9fa; 
+            --bg: #f4f7f6;
+        }
+
+        body { font-family: -apple-system, system-ui, sans-serif; margin: 0; padding: 20px; background: var(--bg); display: flex; justify-content: center; }
+
+        .card { 
+            background: white; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
+            width: 100%;
+            max-width: 1200px;
+            overflow: hidden;
+        }
+
+        .header-area {
+            padding: 20px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        .refresh-status { font-size: 0.8rem; color: #888; }
+
+        table { width: 100%; border-collapse: collapse; }
+        
+        thead th { 
+            background: var(--header-bg); 
+            color: #666; 
+            padding: 15px; 
+            cursor: pointer; 
+            user-select: none; 
+            text-align: left;
+            font-size: 0.85rem;
+            border-bottom: 2px solid #eee;
+        }
+        
+        th.active-sort { color: var(--primary); font-weight: bold; background: #eef7ff; }
+
+        td { 
+            padding: 15px; 
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9rem;
+            color: #444;
+        }
+
+        .col-name { min-width: 150px; font-weight: 600; color: var(--dark); }
+
+        tbody tr:hover { background-color: #fafafa; }
+        .selected-row { background-color: #e3f2fd !important; }
+
+        .status-tag {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.6rem;
+            font-weight: bold;
+        }
+        .status-running { background: #e8f5e9; color: var(--success); }
+        .status-exited { background: #eeeeee; color: var(--grey); }
+        .status-paused { background: #fff3e0; color: var(--warning); }
+
+        button { 
+            padding: 5px 12px; 
+            cursor: pointer; 
+            border: none; 
+            border-radius: 4px; 
+            color: white; 
+            margin-right: 4px; 
+            font-size: 0.8rem;
+            min-width: 50px;
+        }
+        .btn-start { background: var(--success); }
+        .btn-stop { background: var(--warning); }
+        .btn-unpause { background: var(--success); }
+        .btn-restart { background: var(--primary); }
+        
+        .loading-text { color: var(--primary); font-weight: bold; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+
+        /* 响应式：窄屏隐藏特定列 */
+        @media (max-width: 800px) {
+            .hide-on-mobile {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body onclick="clearFocus()">
+    <div class="card" onclick="event.stopPropagation()">
+        <div class="header-area">
+            <h2 style="margin:0; font-size: 1.3rem;">Docker 容器管理</h2>
+            <span id="refreshIndicator" class="refresh-status">准备就绪</span>
+        </div>
+        
+        <table id="dockerTable">
+            <thead>
+                <tr>
+                    <th id="th-name" onclick="sortTable('name')">容器名称</th>
+                    <th id="th-state" onclick="sortTable('state')">运行状态</th>
+                    <th id="th-uptime" class="hide-on-mobile" onclick="sortTable('uptime')">运行时间</th>
+                    <th id="th-cpu" onclick="sortTable('cpu')">CPU 占用</th>
+                    <th id="th-memory" onclick="sortTable('memory')">内存使用</th>
+                    <th style="width: 180px;min-width: 120px; cursor: default;">操作交互</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        let containerData = [];
+        let currentSort = { key: 'name', asc: true };
+        let refreshTimer = null;
+        let selectedId = null;
+        let isActionPending = false;
+        let triggerScroll = false;
+
+        function startAutoRefresh() {
+            if (refreshTimer || isActionPending) return;
+            document.getElementById('refreshIndicator').innerText = "● 自动轮询中 (6s)";
+            refreshTimer = setInterval(loadContainers, 6000);
+        }
+
+        function stopAutoRefresh() {
+            if (refreshTimer) {
+                clearInterval(refreshTimer);
+                refreshTimer = null;
+                document.getElementById('refreshIndicator').innerText = "○ 暂停同步 (正在执行操作)";
+            }
+        }
+
+        async function loadContainers() {
+            try {
+                const res = await fetch('/api/containers');
+                containerData = await res.json();
+                renderTable();
+            } catch (e) { 
+                document.getElementById('refreshIndicator').innerText = "连接 API 失败";
+            }
+        }
+
+        function sortTable(key) {
+            if (currentSort.key === key) {
+                currentSort.asc = !currentSort.asc;
+            } else {
+                currentSort.key = key;
+                currentSort.asc = (key === 'cpu' || key === 'memory') ? false : true;
+            }
+            renderTable();
+        }
+
+        function renderTable() {
+            const tbody = document.querySelector('#dockerTable tbody');
+            const sorted = [...containerData].sort((a, b) => {
+                let v1 = a[currentSort.key];
+                let v2 = b[currentSort.key];
+                if (typeof v1 === 'string') return currentSort.asc ? v1.localeCompare(v2) : v2.localeCompare(v1);
+                return currentSort.asc ? v1 - v2 : v2 - v1;
+            });
+
+            document.querySelectorAll('th').forEach(th => th.classList.remove('active-sort'));
+            const activeHeader = document.getElementById(`th-${currentSort.key}`);
+            if (activeHeader) activeHeader.classList.add('active-sort');
+
+            tbody.innerHTML = sorted.map(c => `
+                <tr id="row-${c.id}" class="${selectedId === c.id ? 'selected-row' : ''}" onclick="selectRow(event, '${c.id}')">
+                    <td class="col-name">${c.name}</td>
+                    <td><span class="status-tag status-${c.state}">${c.state.toUpperCase()}</span></td>
+                    <td class="hide-on-mobile" style="color: #888;">${c.uptime}</td>
+                    <td style="${currentSort.key==='cpu'?'color:var(--primary);font-weight:bold':''}">${c.cpu}%</td>
+                    <td style="${currentSort.key==='memory'?'color:var(--primary);font-weight:bold':''}">${c.memoryStr}</td>
+                    <td id="ctrl-${c.id}" onclick="event.stopPropagation()">
+                        ${renderButtons(c)}
+                        <button class="btn-restart" onclick="action('${c.id}', 'restart')">重启</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            if (triggerScroll && selectedId) {
+                const activeRow = document.getElementById(`row-${selectedId}`);
+                if (activeRow) {
+                    activeRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    triggerScroll = false;
+                }
+            }
+        }
+
+        function renderButtons(c) {
+            if (c.state === 'paused') {
+                return `<button class="btn-unpause" onclick="action('${c.id}', 'unpause')">恢复</button>`;
+            } else if (c.state === 'running') {
+                return `<button class="btn-stop" onclick="action('${c.id}', 'stop')">停止</button>`;
+            } else {
+                return `<button class="btn-start" onclick="action('${c.id}', 'start')">启动</button>`;
+            }
+        }
+
+        function selectRow(event, id) {
+            event.stopPropagation();
+            selectedId = id;
+            renderTable();
+        }
+
+        function clearFocus() {
+            selectedId = null;
+            renderTable();
+        }
+
+        async function action(id, type) {
+            isActionPending = true;
+            stopAutoRefresh();
+            
+            selectedId = id;
+            triggerScroll = true;
+
+            const ctrlCell = document.getElementById(`ctrl-${id}`);
+            ctrlCell.innerHTML = `<span class="loading-text">处理中...</span>`;
+
+            try {
+                await fetch('/api/action', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ id, action: type })
+                });
+                await new Promise(r => setTimeout(r, 1200));
+            } catch (e) {
+                alert('操作失败');
+            } finally {
+                isActionPending = false;
+                await loadContainers();
+                startAutoRefresh();
+            }
+        }
+
+        loadContainers();
+        startAutoRefresh();
+    </script>
+</body>
+</html>
