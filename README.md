@@ -1,6 +1,6 @@
 # hotineAutoRun
-个人的自动化脚本集合
-## docker_controller 网页应用 v20260428
+个人的脚本集合
+## docker_controller Docker网页控制应用 v20260428
 一个简化版的docker镜像管理程序（基于nodejs），可以方便的查看全部docker镜像的内存和cpu占用，以及方便的控制启停或重启。 
 A simplified Docker image management program that allows you to easily view the memory and CPU usage of all Docker images, as well as start, stop and restart images with one-click operations.
 
@@ -19,5 +19,5 @@ A simplified Docker image management program that allows you to easily view the 
 用于监控VPS的每日网络流量使用情况，超过阈值时，通过ntfy发送警报通知。
 每日日终发送统计信息。
 
-## zerotire_connect_check ZeroTier 网络监控脚本 (Node.js 版本) V20260313
+## zerotire_connect_check ZeroTier网络连通性监控脚本 (Node.js) V20260313
 测试多个（2个以上）Zerotier组网设备间的连通性，如果不连通，则等待5分复测 → 仍失败则重启zerotire容器 → ntfy 通知 → 1分钟后最终检测 → ntfy 通知
