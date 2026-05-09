@@ -8,8 +8,8 @@
  * npm install gray-matter
  */
 // 常量定义
-const OBSIDIAN_PATH = 'Y:\\documents\\notes'; // Obsidian的根目录
-const HUGO_PATH = 'D:\\Github\\hotineblog\\构建blog'; // Hugo的根目录
+const OBSIDIAN_PATH = 'D:\\我的笔记'; // Obsidian的根目录
+const HUGO_PATH = 'D:\\Program Files\\hugo\\hotineblog'; // Hugo的根目录D:\Program Files\hugo\hotineblog
 const HUGO_STATIC_PATH = '\\static\\blog';//static文件夹下附件目录
 const HUGO_POSTS_PATH = '\\content\\posts';//博客文件夹
 const HUGO_TAG = 'blog'; // 标记需要转换的文章的标签
