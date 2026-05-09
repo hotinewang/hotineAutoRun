@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapNote</title>
+    <style>
+        /* 全局基础样式：提升文字渲染锐度 */
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: #ffffff;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* 气泡提示 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #f97316;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            z-index: 9999;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(10px);
+        }
+
+        /* 首页：保持纯净无边框 */
+        #home {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: #d3dbe4;
+        }
+
+        #home h1 {
+            font-size: 3rem;
+            margin-bottom: 8px;
+            color: #1e3a8a;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+        }
+
+        .home-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #noteNameInput {
+            padding: 16px 20px;
+            width: 260px;
+            border: none;
+            border-radius: 12px;
+            background: #f1f5f9;
+            outline: none;
+            font-size: 16px;
+            color: #1e293b;
+        }
+
+        #home button {
+            padding: 16px 32px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.1s, background 0.2s;
+        }
+
+        #home button:active {
+            transform: scale(0.98);
+        }
+
+        /* 编辑页布局 */
+        #notePage {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* 标题栏：同步蓝色，移除边框 */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 24px;
+            height: 60px;
+            background: #3b82f6;
+            color: white;
+            z-index: 10;
+        }
+
+        header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        /* 按钮：无边框，白色文字 */
+        .header-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .header-btns button {
+            padding: 8px 18px;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .header-btns button:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .header-btns button:active {
+            background: rgba(255, 255, 255, 0.35);
+        }
+
+        /* 编辑区：锐利易读的等宽字体 */
+        #editor {
+            flex: 1;
+            width: 100%;
+            border: none;
+            padding: 40px;
+            box-sizing: border-box;
+            /* 字体组合：优先使用渲染最清晰的现代等宽字体 */
+            font-family: "JetBrains Mono", "Cascadia Code", "SF Mono", "Menlo", "Consolas", monospace;
+            font-size: 17px;
+            /* 略微调小一点，配合 1.7 倍行高，阅读更锐利 */
+            line-height: 1.75;
+            outline: none;
+            resize: none;
+            color: #334155;
+            background: #ffffff;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 逻辑保持不变，仅更新 HTML 结构以匹配 CSS -->
+    <div id="toast" class="toast"></div>
+
+    <div id="home" class="hidden">
+        <h1>SnapNote</h1>
+        <div class="home-box">
+            <input type="text" id="noteNameInput" placeholder="剪贴板名称 (6位以上)">
+            <button onclick="goToNote()">访问</button>
+        </div>
+    </div>
+
+    <div id="notePage" class="hidden">
+        <header>
+            <h3 id="displayTitle">SnapNote</h3>
+            <div class="header-btns">
+                <button onclick="saveNote()">保存</button>
+                <button onclick="shareNote()">分享</button>
+            </div>
+        </header>
+        <textarea id="editor" spellcheck="false" placeholder="在此输入内容..."></textarea>
+    </div>
+
+    <script>
+        const pathName = window.location.pathname.substring(1);
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 2000);
+        }
+
+        // 核心校验函数
+        function isValidName(name) {
+            if (name.length < 6) {
+                showToast('名称不合规，需要 6 位以上');
+                return false;
+            }
+            if (!/^\w+$/.test(name)) {
+                showToast('只能包含字母、数字和下划线');
+                return false;
+            }
+            return true;
+        }
+
+        // 路由逻辑
+        if (!pathName || pathName === "") {
+            document.getElementById('home').classList.remove('hidden');
+        } else {
+            // 直接访问网址+名称时的校验
+            if (isValidName(pathName)) {
+                initNotePage(pathName);
+            } else {
+                // 如果不合规，1秒后退回主页
+                setTimeout(() => window.location.href = '/', 1000);
+            }
+        }
+
+        // 点击访问按钮的校验
+        function goToNote() {
+            const name = document.getElementById('noteNameInput').value.trim();
+            if (isValidName(name)) {
+                window.location.href = '/' + name;
+            }
+        }
+
+        async function initNotePage(name) {
+            document.getElementById('notePage').classList.remove('hidden');
+            document.getElementById('displayTitle').innerText = 'SnapNote：' + name;
+            try {
+                const response = await fetch(`/api/get?name=${name}`);
+                if (response.ok) {
+                    const text = await response.text();
+                    document.getElementById('editor').value = text;
+                }
+            } catch (e) { console.log('加载失败'); }
+        }
+
+        async function saveNote() {
+            const content = document.getElementById('editor').value;
+            try {
+                const response = await fetch(`/api/save?name=${pathName}`, {
+                    method: 'POST',
+                    body: content
+                });
+                if (response.ok) {
+                    const result = await response.text();
+                    showToast(result === 'Deleted' ? '内容已清空，文件已删除' : '保存成功');
+                    return true;
+                }
+            } catch (e) { showToast('网络连接错误'); return false; }
+        }
+
+        async function shareNote() {
+            if (await saveNote()) {
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    showToast('链接已复制到剪贴板');
+                });
+            }
+        }
+    </script>
+</body>
+
+</html>
