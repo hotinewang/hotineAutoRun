@@ -582,7 +582,8 @@
             const day = parseInt(document.getElementById('field-day').value);
             const desc = document.getElementById('field-desc').value;
 
-            const emojiRegex = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])/;
+            //const emojiRegex = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])/;
+            const emojiRegex = /\p{Emoji_Presentation}/gu;
             const match = nameInput.match(emojiRegex);
             if (match) {
                 icon = match[0];
@@ -628,7 +629,8 @@
         }
 
         function createMarkerContent(icon, name) {
-            const emojiRegex = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])/g;
+            //const emojiRegex = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])/g;
+            const emojiRegex = /\p{Emoji_Presentation}/u;
             const displayName = name.replace(emojiRegex, '').trim();
             return `<div class="marker-wrapper">
                 <div class="custom-marker">${icon}</div>
