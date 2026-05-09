@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- 网站图标：动态 SVG 格式 -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23334155'><path d='M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/></svg>">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23334155'><path d='M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/></svg>">
     <title>SnapNote</title>
     <style>
         :root {
@@ -17,97 +18,178 @@
             --action-color: #334155;
         }
 
-        body, html {
-            margin: 0; padding: 0; height: 100%;
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
             font-family: "Inter", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
-            background: var(--bg-main); color: var(--text-primary);
+            background: var(--bg-main);
+            color: var(--text-primary);
             -webkit-font-smoothing: antialiased;
         }
 
-        .hidden { display: none !important; }
+        .hidden {
+            display: none !important;
+        }
 
         /* 气泡提示：极简黑 */
         .toast {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.9); color: #fff; padding: 10px 20px;
-            border-radius: 6px; font-size: 13px; z-index: 9999;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.9);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 13px;
+            z-index: 9999;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            opacity: 0; transition: all 0.2s ease; pointer-events: none;
+            opacity: 0;
+            transition: all 0.2s ease;
+            pointer-events: none;
         }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(5px); }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(5px);
+        }
 
         /* 首页：极致轻量化 */
         #home {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            height: 100vh; background: var(--bg-accent);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: var(--bg-accent);
         }
 
         #home h1 {
-            font-size: 4rem; margin: 0 0 12px 0; color: var(--text-primary);
-            font-weight: 300; letter-spacing: -0.02em;
+            font-size: 4rem;
+            margin: 0 0 12px 0;
+            color: var(--text-primary);
+            font-weight: 300;
+            letter-spacing: -0.02em;
         }
 
         .intro-text {
-            text-align: center; line-height: 1.6; color: var(--text-secondary);
-            font-size: 0.85rem; margin-bottom: 24px; max-width: 400px;
+            text-align: center;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 24px;
+            max-width: 400px;
         }
 
         .home-box {
-            display: flex; align-items: center; gap: 0; 
-            border: 1px solid var(--line-color); border-radius: 8px;
-            background: #fff; overflow: hidden;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 0;
+            border: 1px solid var(--line-color);
+            border-radius: 8px;
+            background: #fff;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
 
         #noteNameInput {
-            padding: 10px 16px; width: 220px; border: none;
-            outline: none; font-size: 14px; color: var(--text-primary);
+            padding: 10px 16px;
+            width: 220px;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            color: var(--text-primary);
         }
 
         #home button {
-            padding: 10px 20px; background: var(--action-color); color: white;
-            border: none; cursor: pointer; font-size: 14px; font-weight: 500;
+            padding: 10px 20px;
+            background: var(--action-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
             transition: opacity 0.2s;
         }
-        #home button:hover { opacity: 0.9; }
+
+        #home button:hover {
+            opacity: 0.9;
+        }
 
         /* 编辑页布局 */
-        #notePage { display: flex; flex-direction: column; height: 100vh; }
+        #notePage {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
 
         /* 压缩后的标题栏 */
         header {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0 20px; height: 48px; background: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            height: 48px;
+            background: #fff;
             border-bottom: 1px solid var(--line-color);
         }
 
-        header h3 { 
-            margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text-secondary) ;
+        header h3 {
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-secondary);
         }
 
-        .header-btns { display: flex; gap: 8px; }
+        .header-btns {
+            display: flex;
+            gap: 8px;
+        }
 
         .header-btns button {
-            padding: 5px 12px; cursor: pointer; border: 1px solid var(--line-color);
-            border-radius: 4px; background: #fff; color: var(--action-color);
-            font-weight: 500; font-size: 12px; transition: all 0.2s;
+            padding: 5px 12px;
+            cursor: pointer;
+            border: 1px solid var(--line-color);
+            border-radius: 4px;
+            background: #fff;
+            color: var(--action-color);
+            font-weight: 500;
+            font-size: 12px;
+            transition: all 0.2s;
         }
 
-        .header-btns button:hover { background: var(--bg-accent); border-color: #cbd5e1; }
+        .header-btns button:hover {
+            background: var(--bg-accent);
+            border-color: #cbd5e1;
+        }
 
         /* 编辑区：内容为王 */
         #editor {
-            flex: 1; width: 100%; border: none; padding: 30px;
+            flex: 1;
+            width: 100%;
+            border: none;
+            padding: 30px;
             box-sizing: border-box;
             font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
-            font-size: 15px; line-height: 1.6;
-            outline: none; resize: none;
-            color: #334155; background: #fff;
+            font-size: 15px;
+            line-height: 1.6;
+            outline: none;
+            resize: none;
+            color: #334155;
+            background: #fff;
         }
 
         /* 滚动条 */
-        #editor::-webkit-scrollbar { width: 5px; }
-        #editor::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        #editor::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        #editor::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
     </style>
 </head>
 
@@ -117,12 +199,17 @@
     <div id="home" class="hidden">
         <h1>SnapNote</h1>
         <div class="intro-text">
-            便捷的云端剪贴板。<br />
-            所有笔记均为公开，仅用于临时传输，请勿保存敏感信息。
+            便捷的云端剪贴板<br />
+            
         </div>
         <div class="home-box">
-            <input type="text" id="noteNameInput" placeholder="剪贴板名称 (6位以上)" spellcheck="false">
+            <input type="text" id="noteNameInput" placeholder="输入剪贴板名称" spellcheck="false">
             <button onclick="goToNote()">访问</button>
+        </div>
+        <div class="intro-text">
+            剪贴板名支持：字母、数字、下划线，且6位以上<br /><br />
+            通过'https://本站网址/剪贴板名',随时随地编辑/分享内容<br />
+            所有笔记均为公开，仅用于临时传输，请勿保存敏感信息
         </div>
     </div>
 
@@ -190,6 +277,13 @@
 
         async function saveNote() {
             const content = document.getElementById('editor').value;
+
+            // 前端初步检查 (Blob 转换可以准确获取字节数)
+            const size = new Blob([content]).size;
+            if (size > 1024 * 1024) {
+                showToast('内容超过 1MB，无法保存');
+                return;
+            }
             try {
                 const response = await fetch(`/api/save?name=${pathName}`, {
                     method: 'POST',

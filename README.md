@@ -1,6 +1,12 @@
 # hotineAutoRun
 个人的脚本集合
 
+## snap_note 云端剪贴板 v20260509 
+基于nodejs的云端剪贴板程序，使用例如：http://localhost:2334/mynotebookname 即可访问自己的剪贴板。
+剪贴板名支持6位以上的字母/数字/下划线。
+只要知道剪贴板名称就可以访问指定的剪贴板，因此勿放重要数据。
+目前该版本不支持屏蔽频繁提交或恶意遍历名称等功能
+
 ## docker_controller Docker网页控制应用 v20260428
 一个简化版的docker镜像管理程序（基于nodejs），可以方便的查看全部docker镜像的内存和cpu占用，以及方便的控制启停或重启。 
 A simplified Docker image management program that allows you to easily view the memory and CPU usage of all Docker images, as well as start, stop and restart images with one-click operations.

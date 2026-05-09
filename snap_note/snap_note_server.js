@@ -46,23 +46,36 @@ const server = http.createServer((req, res) => {
             return res.end('Invalid Name');
         }
 
+        // --- 新增：预检 Content-Length ---
+        const clen = parseInt(req.headers['content-length'], 10);
+        if (!isNaN(clen) && clen > MAX_SIZE) {
+            res.writeHead(413);
+            return res.end('Content too large (header check)');
+        }
+
         const filePath = path.join(DATA_DIR, noteName);
         let body = '';
         let bodyLen = 0;
 
         req.on('data', chunk => {
-            body += chunk.toString();
             bodyLen += chunk.length;
-            // 实时检查大小，超过 1MB 直接断开，防止大文件攻击
+
+            // 实时检查大小
             if (bodyLen > MAX_SIZE) {
+                console.log(`[Blocked]: ${noteName} exceeded size limit.`);
                 res.writeHead(413);
                 res.end('Content too large');
+                // 销毁请求，不再接收后续数据，防止带宽浪费
                 req.destroy();
+                return;
             }
+            body += chunk.toString();
         });
 
         req.on('end', () => {
-            if (res.writableEnded) return; 
+            // 如果连接已被 destroy()，end 事件仍可能触发，这里加个保护
+            if (res.writableEnded || bodyLen > MAX_SIZE) return;
+
             try {
                 const trimmedBody = body.trim();
                 if (trimmedBody === '') {
@@ -73,12 +86,13 @@ const server = http.createServer((req, res) => {
                     res.writeHead(200);
                     res.end('Deleted');
                 } else {
-                    fs.writeFileSync(filePath, body);
-                    console.log(`[Save]: ${noteName}`);
+                    fs.writeFileSync(filePath, body); // 写入完整的 body
+                    console.log(`[Save]: ${noteName} (${(bodyLen / 1024).toFixed(1)} KB)`);
                     res.writeHead(200);
                     res.end('Success');
                 }
             } catch (err) {
+                console.error(`[IO Error]: ${err.message}`);
                 res.writeHead(500);
                 res.end('IO Error');
             }
