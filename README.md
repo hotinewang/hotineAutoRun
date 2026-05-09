@@ -1,6 +1,14 @@
 # hotineAutoRun
 个人的脚本集合
 
+## Trip Plan 途程规划 v20260509
+这是一个基于高德地图的网页应用，可以创建旅程、添加地图标记、分享给好友。
+部署：需要修改网页html文件中的高德地图API KEY。服务端可以用pm2拉起服务端代码。
+使用：
+- 地图右上方的日程+-按钮，可以切换日程代码（默认是0，显示全部）
+- 在地图上点击可以放置地点标记或者编辑地点标记。
+- 如果在地点名称中输入emoji，则第一个emoji会作为这个地点的图标
+
 ## snap_note 云端剪贴板 v20260509 
 基于nodejs的云端剪贴板程序，使用例如：http://localhost:2334/mynotebookname 即可访问自己的剪贴板。
 剪贴板名支持6位以上的字母/数字/下划线。
@@ -10,14 +18,6 @@
 ## docker_controller Docker网页控制应用 v20260428
 一个简化版的docker镜像管理程序（基于nodejs），可以方便的查看全部docker镜像的内存和cpu占用，以及方便的控制启停或重启。 
 A simplified Docker image management program that allows you to easily view the memory and CPU usage of all Docker images, as well as start, stop and restart images with one-click operations.
-
-## Trip Plan 途程规划 v20260428
-这是一个基于高德地图的网页应用，可以创建旅程、添加地图标记、分享给好友。
-部署：需要修改网页html文件中的高德地图API KEY。服务端可以用pm2拉起服务端代码。
-使用：
-- 地图右上方的日程+-按钮，可以切换日程代码（默认是0，显示全部）
-- 在地图上点击可以放置地点标记或者编辑地点标记。
-- 如果在地点名称中输入emoji，则第一个emoji会作为这个地点的图标
 
 ## ttfound 基金持仓收益日报 v20260428
 基于天天基金网的nodejs脚本，可以每日跑批当前持仓基金的累计收益和年化收益。可直接在青龙面板使用，也可以单独运行。通过ntfy发送通知
