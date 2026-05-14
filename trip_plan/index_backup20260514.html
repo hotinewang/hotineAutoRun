@@ -1,3 +1,4 @@
+<!--注意在409行左右，有两处需要替换成高德地图的securityKey和地图Key-->
 <!DOCTYPE html>
 <html lang="zh-CN">
 
@@ -5,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="shortcut icon" type="image/svg+xml"
-        href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCIgdmlld0JveD0iMCAwIDQ4IDQ4Ij48ZyBmaWxsPSJub25lIj48cGF0aCBmaWxsPSIjZGVlZWZmIiBkPSJNMjMuOTk3IDQ3Ljk5OGMxMy4yNTUgMCAyNC0xMC43NDUgMjQtMjRzLTEwLjc0NS0yNC0yNC0yNHMtMjQgMTAuNzQ1LTI0IDI0czEwLjc0NSAyNCAyNCAyNCIvPjxwYXRoIGZpbGw9IiMyZTc5Y2QiIGQ9Im0zMC45NzkgMTEuNzhsLTYuOTgyIDMuNDlsLTYuOTgyLTMuNDlsLTYuOTgyIDMuNDl2MjIuNjkxbDYuOTgyLTMuNDlsNi45ODIgMy40OWw2Ljk4Mi0zLjQ5bDYuOTgxIDMuNDl2LTIyLjY5eiIvPjxwYXRoIGZpbGw9IiM2YmFmZmYiIGQ9Im0xMC4wMzMgMzcuOTYybDYuOTgyLTMuNDkxVjExLjc4bC02Ljk4MiAzLjQ5em0xMy45NjQgMGw2Ljk4Mi0zLjQ5MVYxMS43OGwtNi45ODIgMy40OXoiLz48cGF0aCBmaWxsPSIjNmJhZmZmIiBkPSJNMTIuMDg2IDMwLjk2YS40MzYuNDM2IDAgMCAxLS4yODgtLjU0NXMuMDk2LS4zMTUuMjc2LS44NGEuNDM2LjQzNiAwIDEgMSAuODI1LjI4MmMtLjE3My41MDYtLjI2Ni44MS0uMjY3LjgxNGEuNDM2LjQzNiAwIDAgMS0uNTQ2LjI4OW0xOS45LTQuOTFhLjQzNi44MzYgMCAwIDEtLjEzNC0uNjAzYy4yNzgtLjQzNS41NDktLjkxOC44MDUtMS40MzVhLjQzNy40MzcgMCAwIDEgLjc4Mi4zODdjLS4yNy41NDUtLjU1NiAxLjA1Ni0uODUgMS41MThhLjQzNy40MzcgMCAwIDEtLjYwMy4xMzNtLTguNDQ2LTEuNTIzYy0uMzA0LS42NjctLjQ5Ny0xLjA5Ni0uNzA2LTEuNTMzYS40MzYuNDM2IDAgMSAxIC43ODctLjM3NmMuMjEyLjQ0My40MTMuODg4LjcxMyAxLjU0N2EuNDM3LjQzNyAwIDAgMS0uNzk0LjM2Mm0tMS40NzctMi45OTNjLS4zMjUtLjUzNi0uNjM3LS45NDMtLjk1Ni0xLjI0NWEuNDM2LjQzNiAwIDEgMSAuNi0uNjM0Yy4zNzcuMzU2LjczOC44MjQgMS4xMDMgMS40MjhhLjQzNi40MzYgMCAxIDEtLjc0Ny40NTFtLTQuMTEyLTEuNzEyYS40MzYuNDM2IDAgMCAxIC4xNS0uNTk5Yy41OTMtLjM1NSAxLjIxMy0uNTI3IDEuODktLjQ0YS40MzcuNDM3IDAgMCAxLS4xMTMuODY3Yy0uNDgtLjA2My0uOTEuMDcyLTEuMzI4LjMyMmEuNDM2LjQzNiAwIDAgMS0uNjAtLjEyam0xNS42MyAzLjIyYS40MzYuNDM2IDAgMCAxLS4yNDgtLjU2NGMuMTg2LS40OC4yODQtLjc5LjI4NS0uNzkyYS40MzYuNDM2IDAgMCAxIC44MzIuMjZjLS4wMDQuMDEzLS4xMDYuMzM4LS4zMDQuODQ4YS40MzcuNDM3IDAgMCAxLS41NjUuMjQ4bTIuNTA3LTMuMjhsLTEtMWwxLTFhLjQzNi40MzYgMCAxIDAtLjYxNy0uNjE4bC0xIDFsLTEuMDAxLTFhLjQzNi40MzYgMCAxIDAtLjYxNy42MTdsMSAxbC0xIDEuMDAxYS40MzYuNDM2IDAgMSAwIC42MTcuNjE3bDEtMWwxIDFhLjQzNi40MzYgMCAxIDAgLjYxOC0uNjE3Ii8+PHBhdGggZmlsbD0iIzJlNzljZCIgZD0iTTEyLjA4NiAzMC45NmEuNDM2LjQzNiAwIDAgMS0uMjg4LS41NDVzLjA5Ni0uMzE1LjI3Ni0uODRhLjQzNi40MzYgMCAxIDEgLjgyNS4yODJjLS4xNzMuNTA2LS4yNjYuODEtLjI2Ny44MTRhLjQzNi40MzYgMCAwIDEtLjU0Ni4yODltMTQuNDU0LTIuMWEuNDM3LjQzNyAwIDAgMSAuNDM0LS43NTdjLjQyNC4yNDMuODg2LjI5NiAxLjM0OS4yM2EuNDM2LjQzNiAwIDEgMSAuMTIxLjg2NWMtLjY4Mi4wOTYtMS4yOTkuMDA5LTEuOTA0LS4zMzhtMy4wNC0uNDY3YS40MzYuNDM2IDAgMCAxIC4xMjYtLjYwNGMuMzk3LS4yNi43OTMtLjYxIDEuMTc3LTEuMDQxYS40MzYuNDM2IDAgMSAxIC42NTMuNThjLS40MzYuNDktLjg5Ljg5LTEuMzUzIDEuMTkyYS40MzYuNDM2IDAgMCAxLS42MDQtLjEyN20tMTYuNjczLjE0YS40MzcuNDM3IDAgMCAxLS4yNTItLjU2M2MuMjA2LS41NC40Mi0xLjA3NC42MzYtMS41ODdhLjQzNi40MzYgMCAxIDEgLjgwNC4zNGE0OCA0OCAwIDAgMC0uNjI1IDEuNTU3YS40MzYuNDM2IDAgMCAxLS41NjMuMjUzbTEyLjI4NS0uOTVhMTEuNCAxMS40IDAgMCAxLS45MS0xLjUwN2EuNDM2LjQzNiAwIDEgMSAuNzc1LS40MDJjLjI5NS41Ny41NjkgMS4wMjUuODM5IDEuMzkyYS40MzYuNDM2IDAgMCAxLS43MDQuNTE3bS0xMC45OTMtMi4xODFhLjQzNi40MzYgMCAwIDEtLjIwNy0uNTgyYy4yNTgtLjU0My41Mi0xLjA1OC43OC0xLjUzMWEuNDM3LjQzNyAwIDAgMSAuNzY1LjQyYTI5IDI5IDAgMCAwLS43NTcgMS40ODZhLjQzNi40MzYgMCAwIDEtLjU4MS4yMDdtMS41ODUtMi45OTJhLjQzNi40MzYgMCAwIDEtLjEyMi0uNjA0YTEyIDEyIDAgMCAxIDEuMDYzLTEuMzk2YS40MzcuNDM3IDAgMCAxIC42NS41ODFjLS4zMjIuMzYxLS42NTQuNzk4LS45ODYgMS4yOTdhLjQzNy40MzYgMCAwIDEtLjYwNS4xMjJtMTcuNzk3LjYzMmEuNDM2LjQzNiAwIDAgMS0uMjQ4LS41NjRjLjE4Ni0uNDguMjg0LS43OS4yODUtLjc5MmEuNDM2LjQzNiAwIDAgMSAuODMyLjI2Yy0uMDA0LjAxMy0uMTA2LjMzOC0uMzA0Ljg0OGEuNDM3LjQzNyAwIDAgMS0uNTY1LjI0OCIvPjwvZz48L3N2Zz4=">
+        href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCIgdmlld0JveD0iMCAwIDQ4IDQ4Ij48ZyBmaWxsPSJub25lIj48cGF0aCBmaWxsPSIjZGVlZWZmIiBkPSJNMjMuOTk3IDQ3Ljk5OGMxMy4yNTUgMCAyNC0xMC43NDUgMjQtMjRzLTEwLjc0NS0yNC0yNC0yNHMtMjQgMTAuNzQ1LTI0IDI0czEwLjc0NSAyNCAyNCAyNCIvPjxwYXRoIGZpbGw9IiMyZTc5Y2QiIGQ9Im0zMC45NzkgMTEuNzhsLTYuOTgyIDMuNDlsLTYuOTgyLTMuNDlsLTYuOTgyIDMuNDl2MjIuNjkxbDYuOTgyLTMuNDlsNi45ODIgMy40OWw2Ljk4Mi0zLjQ5bDYuOTgxIDMuNDl2LTIyLjY5eiIvPjxwYXRoIGZpbGw9IiM2YmFmZmYiIGQ9Im0xMC4wMzMgMzcuOTYybDYuOTgyLTMuNDkxVjExLjc4bC02Ljk4MiAzLjQ5em0xMy45NjQgMGw2Ljk4Mi0zLjQ5MVYxMS43OGwtNi45ODIgMy40OXoiLz48cGF0aCBmaWxsPSIjNmJhZmZmIiBkPSJNMTIuMDg2IDMwLjk2YS40MzYuNDM2IDAgMCAxLS4yODgtLjU0NXMuMDk2LS4zMTUuMjc2LS44NGEuNDM2LjQzNiAwIDEgMSAuODI1LjI4MmMtLjE3My41MDYtLjI2Ni44MS0uMjY3LjgxNGEuNDM2LjQzNiAwIDAgMS0uNTQ2LjI4OW0xOS45LTQuOTFhLjQzNi40MzYgMCAwIDEtLjEzNC0uNjAzYy4yNzgtLjQzNS41NDktLjkxOC44MDUtMS40MzVhLjQzNy40MzcgMCAwIDEgLjc4Mi4zODdjLS4yNy41NDUtLjU1NiAxLjA1Ni0uODUgMS41MThhLjQzNy40MzcgMCAwIDEtLjYwMy4xMzNtLTguNDQ2LTEuNTIzYy0uMzA0LS42NjctLjQ5Ny0xLjA5Ni0uNzA2LTEuNTMzYS40MzYuNDM2IDAgMSAxIC43ODctLjM3NmMuMjEyLjQ0My40MTMuODg4LjcxMyAxLjU0N2EuNDM3LjQzNyAwIDAgMS0uNzk0LjM2Mm0tMS40NzctMi45OTNjLS4zMjUtLjUzNi0uNjM3LS45NDMtLjk1Ni0xLjI0NWEuNDM2LjQzNiAwIDEgMSAuNi0uNjM0Yy4zNzcuMzU2LjczOC44MjQgMS4xMDMgMS40MjhhLjQzNi40MzYgMCAxIDEtLjc0Ny40NTFtLTQuMTEyLTEuNzEyYS40MzYuNDM2IDAgMCAxIC4xNS0uNTk5Yy41OTMtLjM1NSAxLjIxMy0uNTI3IDEuODktLjQ0YS40MzcuNDM3IDAgMCAxLS4xMTMuODY3Yy0uNDgtLjA2My0uOTEuMDcyLTEuMzI4LjMyMmEuNDM2LjQzNiAwIDAgMS0uNi0uMTVtMTUuNjMgMy4yMmEuNDM2LjQzNiAwIDAgMS0uMjQ4LS41NjRjLjE4Ni0uNDguMjg0LS43OS4yODUtLjc5MmEuNDM2LjQzNiAwIDAgMSAuODMyLjI2Yy0uMDA0LjAxMy0uMTA2LjMzOC0uMzA0Ljg0OGEuNDM3LjQzNyAwIDAgMS0uNTY1LjI0OG0yLjUwNy0zLjI4bC0xLTFsMS0xYS40MzYuNDM2IDAgMSAwLS42MTctLjYxOGwtMSAxbC0xLjAwMS0xYS40MzYuNDM2IDAgMSAwLS42MTcuNjE3bDEgMWwtMSAxLjAwMWEuNDM2LjQzNiAwIDEgMCAuNjE3LjYxN2wxLTFsMSAxYS40MzYuNDM2IDAgMSAwIC42MTgtLjYxNyIvPjxwYXRoIGZpbGw9IiMyZTc5Y2QiIGQ9Ik0xMi4wODYgMzAuOTZhLjQzNi40MzYgMCAwIDEtLjI4OC0uNTQ1cy4wOTYtLjMxNS4yNzYtLjg0YS40MzYuNDM2IDAgMSAxIC44MjUuMjgyYy0uMTczLjUwNi0uMjY2LjgxLS4yNjcuODE0YS40MzYuNDM2IDAgMCAxLS41NDYuMjg5bTE0LjQ1NC0yLjFhLjQzNy40MzcgMCAwIDEgLjQzNC0uNzU3Yy40MjQuMjQzLjg4Ni4yOTYgMS4zNDkuMjNhLjQzNi40MzYgMCAxIDEgLjEyMS44NjVjLS42ODIuMDk2LTEuMjk5LjAwOS0xLjkwNC0uMzM4bTMuMDQtLjQ2N2EuNDM2LjQzNiAwIDAgMSAuMTI2LS42MDRjLjM5Ny0uMjYuNzkzLS42MSAxLjE3Ny0xLjA0MWEuNDM2LjQzNiAwIDEgMSAuNjUzLjU4Yy0uNDM2LjQ5LS44OS44OS0xLjM1MyAxLjE5MmEuNDM2LjQzNiAwIDAgMS0uNjA0LS4xMjdtLTE2LjY3My4xNGEuNDM3LjQzNyAwIDAgMS0uMjUyLS41NjNjLjIwNi0uNTQuNDItMS4wNzQuNjM2LTEuNTg3YS40MzYuNDM2IDAgMSAxIC44MDQuMzRhNDggNDggMCAwIDAtLjYyNSAxLjU1N2EuNDM2LjQzNiAwIDAgMS0uNTYzLjI1M20xMi4yODUtLjk1YTExLjQgMTEuNCAwIDAgMS0uOTEtMS41MDdhLjQzNi40MzYgMCAxIDEgLjc3NS0uNDAyYy4yOTUuNTcuNTY5IDEuMDI1LjgzOSAxLjM5MmEuNDM2LjQzNiAwIDAgMS0uNzA0LjUxN20tMTAuOTkzLTIuMTgxYS40MzYuNDM2IDAgMCAxLS4yMDctLjU4MmMuMjU4LS41NDMuNTItMS4wNTguNzgtMS41MzFhLjQzNy40MzcgMCAwIDEgLjc2NS40MmEyOSAyOSAwIDAgMC0uNzU3IDEuNDg2YS40MzYuNDM2IDAgMCAxLS41ODEuMjA3bTEuNTg1LTIuOTkyYS40MzYuNDM2IDAgMCAxLS4xMjItLjYwNGExMiAxMiAwIDAgMSAxLjA2My0xLjM5NmEuNDM3LjQzNyAwIDAgMSAuNjUuNTgxYy0uMzIyLjM2MS0uNjU0Ljc5OC0uOTg2IDEuMjk3YS40MzcuNDM3IDAgMCAxLS42MDUuMTIybTE3Ljc5Ny42MzJhLjQzNi40MzYgMCAwIDEtLjI0OC0uNTY0Yy4xODYtLjQ4LjI4NC0uNzkuMjg1LS43OTJhLjQzNi40MzYgMCAwIDEgLjgzMi4yNmMtLjAwNC4wMTMtLjEwNi4zMzgtLjMwNC44NDhhLjQzNy40MzcgMCAwIDEtLjU2NS4yNDgiLz48L2c+PC9zdmc+">
     <title>途程规划 - TripPlan v2</title>
     <style>
         :root {
@@ -211,7 +212,7 @@
         .btn-group {
             display: flex;
             gap: 8px;
-            margin-top: 10px;
+            margin-top: 20px;
         }
 
         .btn-save {
@@ -235,25 +236,6 @@
             font-size: 12px;
             cursor: pointer;
             font-weight: bold;
-        }
-
-        /* 导航按钮样式 */
-        .btn-nav {
-            width: 100%;
-            background: #007AFF;
-            /* 更接近原生的蓝色 */
-            color: white;
-            border: none;
-            padding: 12px;
-            /* 增加点击区域高度，方便手机操作 */
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 15px;
-            font-size: 14px;
-            /* 手机端字体稍微加大 */
-            display: none;
-            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
         }
 
         @keyframes marker-breath {
@@ -412,8 +394,6 @@
             <label>备注信息</label>
             <textarea id="field-desc" rows="5" placeholder="添加一些描述..."></textarea>
 
-            <button id="panel-nav-btn" class="btn-nav" onclick="goToGaode()">在高德地图打开...</button>
-
             <div class="btn-group">
                 <button id="panel-del-btn" class="btn-del" onclick="handlePanelDelete()">删除</button>
                 <button class="btn-save" onclick="handlePanelSave()">确认保存</button>
@@ -424,10 +404,10 @@
     </div>
 
     <script type="text/javascript">
-        window._AMapSecurityConfig = { securityJsCode: 'ee102e8039d29184a3fa593064598e42' };
+        window._AMapSecurityConfig = { securityJsCode: '这里需要替换成高德的securityKEY' };
     </script>
     <script
-        src="https://webapi.amap.com/maps?v=2.0&key=ac3092955eea8a2d8625050c27640f4e&plugin=AMap.Geocoder,AMap.AutoComplete,AMap.PlaceSearch"></script>
+        src="https://webapi.amap.com/maps?v=2.0&key=这里需要替换成高德的KEY&plugin=AMap.Geocoder,AMap.AutoComplete,AMap.PlaceSearch"></script>
 
     <script>
         let map, markers = [];
@@ -574,8 +554,6 @@
             document.getElementById('field-day').value = data.day;
             document.getElementById('field-desc').value = data.desc;
             document.getElementById('panel-del-btn').style.display = editingMarkerId ? 'block' : 'none';
-            // 显示/隐藏导航按钮
-            document.getElementById('panel-nav-btn').style.display = editingMarkerId ? 'block' : 'none';
 
             // 记录打开时间，用于点击背景关闭的防误触判定
             panelOpenTime = Date.now();
@@ -598,31 +576,6 @@
             }
         }
 
-        // 在高德地图中打开位置（统一使用H5页面）
-        window.goToGaode = function () {
-            if (!editingMarkerId) return;
-            const marker = markers.find(m => m.getExtData().id === editingMarkerId);
-            if (marker) {
-                const data = marker.getExtData();
-                const lat = data.lat;
-                const lng = data.lng;
-                // 对名称进行编码，防止特殊字符导致链接失效
-                const name = encodeURIComponent(data.name);
-
-                /**
-                 * 使用高德官方 Marker 接口：
-                 * position: 经度,纬度
-                 * name: 标注点显示的名称
-                 * coordinate: gaode (表示使用的是火星坐标系/高德坐标系)
-                 * callnative: 1 (在手机端会自动尝试唤醒APP，电脑端则正常展示网页)
-                 */
-                const url = `https://uri.amap.com/marker?position=${lng},${lat}&name=${name}&coordinate=gaode&callnative=1`;
-
-                // 直接在新标签页打开
-                window.open(url, '_blank');
-            }
-        };
-
         window.handlePanelSave = function () {
             const nameInput = document.getElementById('field-name').value || "未命名地点";
             let icon = document.getElementById('field-icon').value;
@@ -630,7 +583,7 @@
             const desc = document.getElementById('field-desc').value;
 
             //const emojiRegex = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])/;
-            const emojiRegex = /\p{Emoji_Presentation}/u;
+            const emojiRegex = /\p{Emoji_Presentation}/gu;
             const match = nameInput.match(emojiRegex);
             if (match) {
                 icon = match[0];
@@ -677,7 +630,7 @@
 
         function createMarkerContent(icon, name) {
             //const emojiRegex = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])/g;
-            const emojiRegex = /\p{Emoji_Presentation}/gu;
+            const emojiRegex = /\p{Emoji_Presentation}/u;
             const displayName = name.replace(emojiRegex, '').trim();
             return `<div class="marker-wrapper">
                 <div class="custom-marker">${icon}</div>
