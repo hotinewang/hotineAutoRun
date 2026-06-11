@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * V20260313
+ * V20260611
  * ZeroTier 网络监控脚本 (Node.js 版本)
  * 修改点：支持 IP 别名，增加 5 分钟复测机制
  * 功能: 多 IP 检测 → 失败等待5分复测 → 仍失败则重启容器 → ntfy 通知 → 1分钟后最终检测 → ntfy 通知
@@ -17,8 +17,8 @@ const CONFIG = {
     // 检测目标：设置 IP 及其别名（不要检测本机的Zerotier IP！）
     targets: [
         //{ ip: '192.168.193.254', alias: '错误设备' }
-        { ip: '192.168.193.1', alias: 'NAS100' },
-        //{ ip: '192.168.193.2', alias: 'BWG服务器' },
+        //{ ip: '192.168.193.1', alias: 'NAS100' },
+        { ip: '192.168.193.2', alias: 'BWG服务器' },
         { ip: '192.168.193.4', alias: 'MINI-NAS' },
         { ip: '192.168.193.8', alias: 'QX-N1盒子' }
     ],
@@ -30,15 +30,16 @@ const CONFIG = {
     ntfy: {
         topic: 'hotine',                // 替换为你的 ntfy topic
         server: 'https://ntfy.sh',      // ntfy 服务器地址
-        priority: 'high'                // 优先级
+        priority: 'high',                // 优先级
+        timeout: 10
     },
     
     // 主机标识
-    hostname: 'BWG服务器',
+    hostname: 'NAS100',
     
     // ping 配置
     pingCount: 3,                      // 同一IP地址PING的次数
-    pingTimeout: 10,                    // 超时的时间-秒
+    pingTimeout: 5,                    // 超时的时间-秒
     
     // 第一次连通测试全部失败后，重试等待时间（毫秒）
     retryDelay: 5 * 60 * 1000,         // 第一次失败后等待 5 分钟再试
@@ -95,24 +96,21 @@ async function pingHost(target) {
         
         const isAlive = lossPercent < 100;
         log(`检测 ${target.alias}(${target.ip}): ${isAlive ? '✅ 通' : '❌ 不通'} (${lossPercent}% 丢包)`);
-        return isAlive;
+        return { ...target, alive: isAlive };
         
     } catch (error) {
         log(`检测 ${target.alias}(${target.ip}): ❌ 失败/超时`);
-        return false;
+        return { ...target, alive: false };
     }
 }
 
-// ========== 检测所有目标 ==========
+// ========== 检测所有目标 (修改为并行执行) ==========
 async function checkAllTargets() {
-    const results = [];
-    for (const target of CONFIG.targets) {
-        const alive = await pingHost(target);
-        results.push({ ...target, alive });
-    }
+    // 优化点：使用 Promise.all 并行测试所有 IP，防止串行累加超时时间
+    const promises = CONFIG.targets.map(target => pingHost(target));
+    const results = await Promise.all(promises);
     
     const allFailed = results.every(r => !r.alive);
-    // 格式化详情用于日志和消息
     const details = results.map(r => `${r.alias}: ${r.alive ? '✅' : '❌'}`).join('\n');
     
     return { allFailed, details };
@@ -122,7 +120,8 @@ async function checkAllTargets() {
 async function restartContainer() {
     log(`[操作] 正在重启容器: ${CONFIG.containerName}...`);
     try {
-        await execAsync(`docker restart ${CONFIG.containerName}`);
+        // 增加 30 秒强制超时，防止 docker daemon 卡死导致脚本永久挂起
+        await execAsync(`docker restart ${CONFIG.containerName}`, { timeout: 30000 });
         log(`[成功] 容器 ${CONFIG.containerName} 已重启`);
         return true;
     } catch (error) {
@@ -131,12 +130,12 @@ async function restartContainer() {
     }
 }
 
-// ========== 发送 ntfy 通知 ==========
+// ========== 发送 ntfy 通知 (增加超时防护) ==========
 async function sendNtfy(message, tags = ['computer'], priority = CONFIG.ntfy.priority) {
     const title = `${CONFIG.hostname} 网络监控`;
     try {
-        // 使用 -T 简化参数传递，避免复杂的转义
-        const curlCmd = `curl -s \
+        // 优化点：增加了 --max-time 参数，防止发送通知时由于网络不可达导致脚本死锁
+        const curlCmd = `curl -s --max-time ${CONFIG.ntfy.timeout} \
             -H "Title: ${title}" \
             -H "Priority: ${priority}" \
             -H "Tags: ${tags.join(',')}" \
@@ -146,7 +145,7 @@ async function sendNtfy(message, tags = ['computer'], priority = CONFIG.ntfy.pri
         await execAsync(curlCmd);
         log(`[通知] ntfy 消息已尝试发送`);
     } catch (error) {
-        log(`[通知] ntfy 发送错误: ${error.message}`);
+        log(`[通知] ntfy 发送错误或超时: ${error.message}`);
     }
 }
 
@@ -157,7 +156,6 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 async function main() {
     log('>>> 启动 ZeroTier 连通性检查');
 
-    // 1. 第一次检测
     log('--- 第一轮检测开始 ---');
     const firstCheck = await checkAllTargets();
     
@@ -166,7 +164,6 @@ async function main() {
         return;
     }
 
-    // 2. 第一次全失败，进入复测逻辑
     log(`⚠️ 警告: 第一轮检测全部失败。等待 ${CONFIG.retryDelay / 1000 / 60} 分钟后进行复测...`);
     await sleep(CONFIG.retryDelay);
 
@@ -178,9 +175,9 @@ async function main() {
         return;
     }
 
-    // 3. 两次都全失败，执行重启逻辑
     log('🚨 确认: 连续两次检测全部失败，准备重启容器并发送通知。');
     
+    // 即使这里 ntfy 出现网络超时，也会在 10 秒内强制断开并继续执行下面的重启逻辑
     await sendNtfy(
         `🚨 ${CONFIG.hostname} 已离线\n` +
         `经过5分钟复测仍不通：\n${secondCheck.details}\n` +
@@ -196,7 +193,6 @@ async function main() {
         return;
     }
 
-    // 4. 重启后最后确认
     log(`等待 ${CONFIG.recheckDelay / 1000} 秒后进行最终检测...`);
     await sleep(CONFIG.recheckDelay);
 
