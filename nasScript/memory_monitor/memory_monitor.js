@@ -1,6 +1,7 @@
 /**
  * 安装依赖：npm install systeminformation dockerode
  * 运行脚本：node memory_monitor.js
+ * v20260615
  * 
  * 代码如果需要自动执行，需要forever进程守护
  * 全局安装:
@@ -14,6 +15,9 @@ const si = require('systeminformation');
 const Docker = require('dockerode');
 const fs = require('fs');
 const path = require('path');
+
+//引入消息发送模块：
+const { sendNotify, NOTIFY_CONFIG } = require('../sendNotify/sendNotify.js');
 
 // Configure logging
 const logFile = path.join(__dirname, 'memory_monitor.log');
@@ -105,6 +109,7 @@ async function stopContainer(containerId) {
         sendMSG(`已停止 Docker 容器 ID: ${containerId}`);
     } catch (error) {
         logMessage(`停止 Docker 容器 ID ${containerId} 时出错: ${error.message}`);
+        sendMSG(`停止 Docker 容器 ID ${containerId} 时出错: ${error.message}`);
     }
 }
 
@@ -165,7 +170,7 @@ monitorMemory();
  * @param {array} [click] - 消息被点击时跳转的url。
  * @param {string} [serverUrl='https://ntfy.sh'] - ntfy服务的URL,默认为官方服务器
  */
-async function sendNtfyMessage(topic, message, title = null,  priority = 3, tags = null, attach = null , click = null , serverUrl = 'https://ntfy.sh') {
+/*async function sendNtfyMessage(topic, message, title = null,  priority = 3, tags = null, attach = null , click = null , serverUrl = 'https://ntfy.sh') {
     try {
       if(topic==null || message==null || priority >5 ||priority <1){
         console.error("topic、message不能为空，priority的值只能取1、2、3、4、5!");
@@ -202,10 +207,16 @@ async function sendNtfyMessage(topic, message, title = null,  priority = 3, tags
       console.error('消息发送失败:\n', error);
     }
   }
-  
+  */
 
   function sendMSG(text=""){
-    sendNtfyMessage('hotine',text,'NAS异常报告',5,["nas","warning","skull_and_crossbones"]);
+    //sendNtfyMessage('hotine',text,'NAS异常报告',5,["nas","warning","skull_and_crossbones"]);
+    await sendNotify({
+        title:"🖥️内存监控",
+        message:text,
+        priority:3,
+        tags:["nas","warning","skull_and_crossbones"]
+    })
   }
   // 使用示例
   //sendNtfyMessage('hotine','这是一条测试用的MSG', '测试信息',4,['loudspeaker','skull','hugging_face','hotine']);

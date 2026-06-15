@@ -4,6 +4,9 @@
 //const axios = require('axios');
 const http = require('http');
 
+//引入消息发送模块：
+const { sendNotify, NOTIFY_CONFIG } = require('../sendNotify/sendNotify.js');
+
 //基金信息数组(去重)
 const fundInfoList = [];
 //基金信息数组（用户关注的基金）
@@ -61,61 +64,13 @@ const watchlistText = `
 */
 
 
-/**
- * 发送推送消息到ntfy服务
- * @param {string} topic - 消息的主题
- * @param {string} message - 要发送的消息内容
- * @param {string} title - 消息的大标题(默认不使用大标题)
- * @param {int} [priority=3] - 消息的优先级，可以是1-5的整数，分别是最小、小、默认、大、最大
- * @param {array} [tags] - 消息的标签,字符串数组。
- * @param {array} [attach] - 附件、图片URL。
- * @param {array} [click] - 消息被点击时跳转的url。
- * @param {string} [serverUrl='https://ntfy.sh'] - ntfy服务的URL,默认为官方服务器
- */
-async function sendNtfyMessage(topic, message, title = null, priority = 3, tags = null, attach = null, click = null, serverUrl = 'https://ntfy.sh') {
-    try {
-        if (topic == null || message == null || priority > 5 || priority < 1) {
-            console.error("topic、message不能为空，priority的值只能取1、2、3、4、5!");
-        }
-
-        // 构建请求的headers
-        const headers = new Headers({
-            'Content-Type': 'application/json',
-        });
-
-        // 创建消息Object
-        const payload = { topic, message, priority };
-        if (title) payload.title = title;
-        if (tags) payload.tags = tags;
-        if (attach) payload.attach = attach;
-        if (click) payload.click = click;
-
-        // 构建请求的body
-        const body = JSON.stringify(payload);
-        //console.log('拟发出的消息body:', body);
-
-        // 发送POST请求到ntfy服务
-        const response = await fetch(serverUrl, { method: 'POST', headers: headers, body: body });
-
-        // 检查响应状态
-        if (!response.ok) {
-            throw new Error(`HTTP 错误! 状态: ${response.status}`);
-        }
-
-        // 获取响应数据
-        const data = await response.json();
-        console.log('消息发送成功:\n', ""/*data*/);
-    } catch (error) {
-        console.error('消息发送失败:\n', error);
-    }
-}
 
 function formatDate(ts) {
-  const d = new Date(ts);
-  const yyyy = d.getFullYear();
-  const mm   = String(d.getMonth() + 1).padStart(2, '0'); // 月
-  const dd   = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
+    const d = new Date(ts);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0'); // 月
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
 }
 
 
@@ -141,15 +96,15 @@ function readWatchlistTextFile() {
             if (debugMode) { console.log(line); }
             //010027,景顺长城核心中景一年持有混合,49418.35,1.0118,2020-12-16
             const obj = (([fundCode, shortName, fundShares, costPerShare, confirmationDate]) => ({ fundCode, shortName, fundShares, costPerShare, confirmationDate }))(line.split(','));
-            obj.fundShares=parseFloat(obj.fundShares);
-            obj.costPerShare=parseFloat(obj.costPerShare);
+            obj.fundShares = parseFloat(obj.fundShares);
+            obj.costPerShare = parseFloat(obj.costPerShare);
             if (debugMode) { console.log(obj); }
             watchlist.push(obj);
         }
         console.log("基金清单数据解析完毕，条数：", watchlist.length);
         return watchlist;
     } catch (err) {
-        console.error('读取用户基金名单文件'  + '异常:', err);
+        console.error('读取用户基金名单文件' + '异常:', err);
         return [];
     }
 }
@@ -209,76 +164,76 @@ function loadFundData(code) {
  * @returns {Array<Object>} watchList 本身（方便链式调用）
  */
 function mergeByFundCode(fundInfoList, watchList) {
-    if(debugMode){console.log('开始匹配基金收益数据...')};
-  // 1. 建立 fundCode -> 信息对象 的索引
-  const infoMap = new Map(fundInfoList.map(item => [item.fundCode, item]));
+    if (debugMode) { console.log('开始匹配基金收益数据...') };
+    // 1. 建立 fundCode -> 信息对象 的索引
+    const infoMap = new Map(fundInfoList.map(item => [item.fundCode, item]));
 
-  // 2. 遍历 watchList，找到匹配就合并属性
-  watchList.forEach(watchItem => {
-    const info = infoMap.get(watchItem.fundCode);
-    if (info) {
-      Object.assign(watchItem, info);   // 把 info 上所有属性拷到 watchItem
-    }
-    //计算持有天数
-    watchItem.holdDays = Math.max(0, Math.floor((new Date(watchItem.nowDate + 'T00:00:00') - new Date(watchItem.confirmationDate + 'T00:00:00')) / 86400000)); // 864e5 = 24*60*60*1000
-    if(!watchItem.holdDays){
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        yesterday.setHours(0, 0, 0, 0);
-        watchItem.holdDays = Math.max(0, Math.floor((yesterday - new Date(watchItem.confirmationDate + 'T00:00:00')) / 86400000)); // 864e5 = 24*60*60*1000
-    }
-    //计算收益率和年化收益率
-    watchItem.returnRate=watchItem.costPerShare === 0 ? 0 : watchItem.nowNetWorthTrend / watchItem.costPerShare-1;
-    watchItem.annualizedReturn =watchItem.returnRate/watchItem.holdDays*365;
-    if(debugMode){console.log('匹配：',watchItem)};
+    // 2. 遍历 watchList，找到匹配就合并属性
+    watchList.forEach(watchItem => {
+        const info = infoMap.get(watchItem.fundCode);
+        if (info) {
+            Object.assign(watchItem, info);   // 把 info 上所有属性拷到 watchItem
+        }
+        //计算持有天数
+        watchItem.holdDays = Math.max(0, Math.floor((new Date(watchItem.nowDate + 'T00:00:00') - new Date(watchItem.confirmationDate + 'T00:00:00')) / 86400000)); // 864e5 = 24*60*60*1000
+        if (!watchItem.holdDays) {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            yesterday.setHours(0, 0, 0, 0);
+            watchItem.holdDays = Math.max(0, Math.floor((yesterday - new Date(watchItem.confirmationDate + 'T00:00:00')) / 86400000)); // 864e5 = 24*60*60*1000
+        }
+        //计算收益率和年化收益率
+        watchItem.returnRate = watchItem.costPerShare === 0 ? 0 : watchItem.nowNetWorthTrend / watchItem.costPerShare - 1;
+        watchItem.annualizedReturn = watchItem.returnRate / watchItem.holdDays * 365;
+        if (debugMode) { console.log('匹配：', watchItem) };
 
-  });
+    });
 
-  return watchList;
+    return watchList;
 }
 
 /**
  * 生成NTFY消息通知文本
  */
-function toNtfyMsg(){
+function toNtfyMsg() {
     var reporttxt = `📰基金日报（${new Date().getMonth() + 1}月${new Date().getDate()}日）📰\n\n`;
     //打印基金信息
     watchlist.forEach(item => {
         ////如果有持仓日，则根据持仓收益显示对应的图标
         if (item.confirmationDate) {
-            if(item.returnRate >=0){
-                reporttxt+="💰";
+            if (item.returnRate >= 0) {
+                reporttxt += "💰";
             }
-            else{
-                reporttxt+="💸";
+            else {
+                reporttxt += "💸";
             }
         }
-        else{
-            reporttxt+="📊";
+        else {
+            reporttxt += "📊";
         }
         //基金名称和代码
         reporttxt += `${item.fundCode}:${item.shortName}`;
         //最新净值日
-        reporttxt+=`${new Date(item.nowDate).getMonth() + 1}月${new Date(item.nowDate).getDate()}日\n`;
+        reporttxt += `${new Date(item.nowDate).getMonth() + 1}月${new Date(item.nowDate).getDate()}日\n`;
         //计算盈亏
-        let c=Math.round((item.fundShares*item.nowNetWorthTrend-item.fundShares*item.costPerShare)*100)/100;
-        if(c>=0){
-            reporttxt+=`  - 浮盈+${c}元`;
-        }else{
-            reporttxt+=`  - 浮亏${c}元`;
+        let c = Math.round((item.fundShares * item.nowNetWorthTrend - item.fundShares * item.costPerShare) * 100) / 100;
+        if (c >= 0) {
+            reporttxt += `  - 浮盈+${c}元`;
+        } else {
+            reporttxt += `  - 浮亏${c}元`;
         }
         reporttxt += `持仓${item.holdDays}天\n`
         //持仓收益
-        reporttxt += `  - 年化${Math.round(item.annualizedReturn*10000)/100}% 总收益${Math.round(item.returnRate*10000)/100}%\n`;
+        reporttxt += `  - 年化${Math.round(item.annualizedReturn * 10000) / 100}% 总收益${Math.round(item.returnRate * 10000) / 100}%\n`;
         //reporttxt += `持仓${item.holdDays}天\n`
         //reporttxt += `  - 近1月${item.syl_1m}%|近3月${item.syl_3m}%|近半年${item.syl_6m}%|近1年${item.syl_1y}%|成立来${item.syl_total}%\n`;
         reporttxt += `  - 近1月${item.syl_1m}%|3月${item.syl_3m}%|1年${item.syl_1y}%\n`;
         reporttxt += `  - 排名${item.rateInSimilarPersent}/100\n\n`;
-        console.log( `${item.fundCode}:${new Date(item.nowDate).getMonth() + 1}月${new Date(item.nowDate).getDate()}日:${item.nowNetWorthTrend}`)
+        console.log(`${item.fundCode}:${new Date(item.nowDate).getMonth() + 1}月${new Date(item.nowDate).getDate()}日:${item.nowNetWorthTrend}`)
 
     });
     //reporttxt += `*持仓收益根据当前净值与持仓当日净值计算而成，未考虑持仓成本（如手续费）。`;
-    if(true){console.log(reporttxt)};
+    if (true) { console.log(reporttxt) };
     return reporttxt;
 }
 
@@ -303,12 +258,12 @@ function main() {
             try {
                 const txt = await loadFundData(code);
                 //解析天天基金数据内容
-                let fund ={};
-                fund.fundCode=txt.match(/var\s*fS_code\s*=\s*"(.*?)";/)[1];//基金代码
-                fund.name=txt.match(/var\s*fS_name\s*=\s*"(.*?)";/)[1];//基金名
+                let fund = {};
+                fund.fundCode = txt.match(/var\s*fS_code\s*=\s*"(.*?)";/)[1];//基金代码
+                fund.name = txt.match(/var\s*fS_name\s*=\s*"(.*?)";/)[1];//基金名
                 let rateInSimilarPersentMatch = txt.match(/var\s*Data_rateInSimilarPersent\s*=\s*(\[.*?\]);/s);
                 let rateInSimilarPersent = rateInSimilarPersentMatch ? JSON.parse(rateInSimilarPersentMatch[1]) : [];//同类排名百分比数组
-                fund.rateInSimilarPersent =rateInSimilarPersent[rateInSimilarPersent.length-1][1];
+                fund.rateInSimilarPersent = rateInSimilarPersent[rateInSimilarPersent.length - 1][1];
                 let syl_1yMatch = txt.match(/var\s*syl_1n\s*=\s*"(.*?)";/);
                 fund.syl_1y = syl_1yMatch ? parseFloat(syl_1yMatch[1]) : 0;//近1年收益
                 let syl_6mMatch = txt.match(/var\s*syl_6y\s*=\s*"(.*?)";/);
@@ -328,7 +283,7 @@ function main() {
                 fund.nowNetWorthTrend = parseFloat(data_netWorthTrend[data_netWorthTrend.length - 1].y);//最新单位净值
 
                 fundInfoList.push(fund);
-                if(debugMode){console.log(`[${code}] 解析成功:`,fund);}
+                if (debugMode) { console.log(`[${code}] 解析成功:`, fund); }
             } catch (e) {
                 console.error(`[${code}]解析失败：${e.message}`);
             }
@@ -337,8 +292,7 @@ function main() {
         }
 
         //将基金数据匹配的关注列表
-        if(fundInfoList.length==0 ||watchlist.length==0)
-        {
+        if (fundInfoList.length == 0 || watchlist.length == 0) {
             console.error(`关注清单数据匹配失败：关注清单数${watchlist.length}，基金信息列表数${fundInfoList.length}。`);
             return;
         }
@@ -353,12 +307,20 @@ function main() {
             if (Number.isNaN(aa)) return 1;   // aa 是 NaN，排后
             if (Number.isNaN(bb)) return -1;  // bb 是 NaN，排前
             return bb - aa;                   // 正常降序
-            });
+        });
 
 
         //输出关注列表的数据
-        const msg =toNtfyMsg();
-        sendNtfyMessage('hotine',msg, null,4,['基金日报','hotine']);
+        const msg = toNtfyMsg();
+        //sendNtfyMessage('hotine', msg, null, 4, ['基金日报', 'hotine']);
+        await sendNotify(
+            {
+                title: '基金日报',
+                message: msg,
+                priority: 2,
+                tags: ['📰']
+            }
+        )
 
 
         if (debugMode) { console.log("天天基金数据解析完成"); }

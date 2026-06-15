@@ -4,7 +4,7 @@
  */
 const NOTIFY_CONFIG = {
     timeout: 20000, // 全局超时（毫秒）
-    
+
     ntfy: {
         enabled: true,
         server: 'https://ntfy.sh',
@@ -13,7 +13,7 @@ const NOTIFY_CONFIG = {
     },
     gotify: {
         enabled: true,
-        server: 'http://gotify.hotine.wang',
+        server: 'https://gotify.hotine.wang',
         token: 'Aw_fbAwyOvGJOt_',
         defaultPriority: 2, // 默认：中
     }
@@ -46,7 +46,7 @@ const PROVIDERS = {
             priority: finalPriority,
             tags: tags || []
         };
-        
+
         const response = await fetch(config.server, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -64,14 +64,14 @@ const PROVIDERS = {
         if (!config.token || !config.server) {
             throw new Error('Gotify 配置不完整，缺少 token 或 server');
         }
-        
+
         // 映射关系：1->3(低), 2->5(中), 3->9(红字高亮报警)
         const gotifyPriorityMap = { 1: 3, 2: 5, 3: 9 };
         const finalPriority = gotifyPriorityMap[priority] || gotifyPriorityMap[config.defaultPriority] || 5;
 
         const baseUrl = config.server.replace(/\/$/, "");
         const fullUrl = `${baseUrl}/message?token=${config.token}`;
-        
+
         const payload = {
             message,
             priority: finalPriority
@@ -106,7 +106,7 @@ async function sendNotify({ title, message, priority = 2, tags }) {
     const safePriority = Math.max(1, Math.min(3, parseInt(priority) || 2));
 
     debugLog(`开始广播通知: [${title || '无标题'}], 统一等级: ${safePriority}`);
-    
+
     const activeProviders = Object.keys(PROVIDERS).filter(key => NOTIFY_CONFIG[key]?.enabled);
 
     if (activeProviders.length === 0) {
@@ -123,8 +123,8 @@ async function sendNotify({ title, message, priority = 2, tags }) {
         try {
             debugLog(`正在通过 [${key}] 发送...`);
             await PROVIDERS[key](
-                NOTIFY_CONFIG[key], 
-                { title, message, priority: safePriority, tags }, 
+                NOTIFY_CONFIG[key],
+                { title, message, priority: safePriority, tags },
                 controller.signal
             );
             console.log(`[✓] [${key}] 推送成功`);
@@ -132,7 +132,8 @@ async function sendNotify({ title, message, priority = 2, tags }) {
             if (error.name === 'AbortError') {
                 console.error(`[X] [${key}] 推送失败: 请求超时`);
             } else {
-                console.error(`[X] [${key}] 推送失败:`, error.message);
+                // 打印 error.cause 可以看到更底层的错误（如 ECONNREFUSED, ENOTFOUND 等）
+                console.error(`[X] [${key}] 推送失败:`, error.message, error.cause ? `原因: ${error.cause.code}` : '');
             }
         }
     });
@@ -142,7 +143,7 @@ async function sendNotify({ title, message, priority = 2, tags }) {
     } finally {
         clearTimeout(timeoutId);
     }
-    
+
     debugLog('所有通知处理完毕。');
 }
 
