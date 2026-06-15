@@ -1,0 +1,11 @@
+{
+  "name": "msg",
+  "version": "1.0.0",
+  "description": "ntfy Real-time Message Dashboard & Command Runner",
+  "main": "server.js",
+  "dependencies": {
+    "express": "^4.19.2",
+    "ws": "^8.16.0",
+    "undici": "^6.13.0"
+  }
+}

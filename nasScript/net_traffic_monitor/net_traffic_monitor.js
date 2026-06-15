@@ -6,20 +6,23 @@
  * 3. 支持 Debug 模式，查看系统所有网口信息及详细执行流程。
  * 4. 月度统计从每月 28 日起算。
  * 在脚本根文件夹执行 npm install node-schedule 安装所需依赖
- * * v2026-03-25
+ * * v2026-06-15
  */
 
 const fs = require('fs');
 const path = require('path');
 const schedule = require('node-schedule');
 
+//引入消息发送模块：
+const { sendNotify, NOTIFY_CONFIG } = require('../sendNotify/sendNotify.js');
+
 // --- 核心配置区域 (CONFIG) ---
 const CONFIG = {
     debugMode: false,               // 调试模式：true 时输出详细过程并列出系统所有网口
     netName: "ens18",              // 要监控的网口名称（如 eth0, ens18）
-    dailyLimitMB: 10000,           // 每日流量阈值 (MB)，超过后每小时报警
-    ntfyTopic: "hotine",           // ntfy.sh 的主题名
-    ntfyServer: "https://ntfy.sh", // ntfy 服务器地址
+    dailyLimitGB: 10,           // 每日流量阈值 (GB)，超过后每小时报警
+    //ntfyTopic: "hotine",           // ntfy.sh 的主题名
+    //ntfyServer: "https://ntfy.sh", // ntfy 服务器地址
     logFileName: 'network_traffic.log' // 流量记录文件名
 };
 
@@ -141,7 +144,7 @@ function calculateTrafficStats() {
 /**
  * 调用 ntfy 发送通知
  */
-async function sendNtfyMessage(message, title, priority = 3, tags = []) {
+/*async function sendNtfyMessage(message, title, priority = 3, tags = []) {
     debugLog(`正在发送 Ntfy 推送: ${title}...`);
     try {
         const payload = { 
@@ -166,7 +169,7 @@ async function sendNtfyMessage(message, title, priority = 3, tags = []) {
         console.error('[E] Ntfy 网络请求异常:', error.message);
     }
 }
-
+*/
 
 // 单位转换助手
 function bytesToMB(bytes) { return Math.round(bytes / (1024 * 1024)); }
@@ -187,26 +190,38 @@ async function main(isEndOfDay = false) {
 
     // 计算统计量
     const stats = calculateTrafficStats();
-    const todayTotalMB = bytesToMB(stats.todaySent + stats.todayReceived);
+    const todayTotalGB = bytesToGB(stats.todaySent + stats.todayReceived);
     const monthlyTotalGB = bytesToGB(stats.monthlySent + stats.monthlyReceived);
 
     // 构造通用报告文本
-    let report = `当日累计: ${todayTotalMB} MB (↑${bytesToMB(stats.todaySent)} / ↓${bytesToMB(stats.todayReceived)})\n`;
-    report += `月度累计: ${monthlyTotalGB} GB (28日重置)`;
+    let report = `当日累计: ${todayTotalGB} GB (↑${bytesToGB(stats.todaySent)} / ↓${bytesToGB(stats.todayReceived)})\n`;
+    report += `月度累计: ${monthlyTotalGB} GB (${(monthlyTotalGB / 1024).toFixed(1)}%,28日重置)`;
 
     // 分支 1: 日终汇总报告 (23:59 发送)
     if (isEndOfDay) {
         console.log(`[I] ${new Date().toLocaleDateString()} 日终汇总任务执行中...`);
-        await sendNtfyMessage(report, '🌙 每日流量终结报告', 3, ['calendar', 'BWG']);
+        //await sendNtfyMessage(report, '🌙 每日流量终结报告', 3, ['calendar', 'BWG']);
+        await sendNotify({
+            title:'BWG流量日终报告🌙',
+            message:report,
+            priority: 2 ,
+            tags: ['calendar', 'BWG']
+        })
     } 
     // 分支 2: 常规超量报警检查 (每小时运行)
     else {
-        if (todayTotalMB > CONFIG.dailyLimitMB) {
-            debugLog(`警告触发：当前流量 ${todayTotalMB} MB > 阈值 ${CONFIG.dailyLimitMB} MB`);
-            const alertMsg = `注意：今日流量已达 ${todayTotalMB} MB，已超过预设阈值！\n\n${report}`;
-            await sendNtfyMessage(alertMsg, '⚠️ 流量超限提醒', 4, ['warning', 'loudspeaker']);
+        if (todayTotalGB > CONFIG.dailyLimitGB) {
+            debugLog(`警告触发：当前流量 ${todayTotalGB} GB > 阈值 ${CONFIG.dailyLimitGB} GB`);
+            const alertMsg = `注意：今日流量已达 ${todayTotalGB} GB，已超过预设阈值！\n\n${report}`;
+            //await sendNtfyMessage(alertMsg, '⚠️ 流量超限提醒', 4, ['warning', 'loudspeaker']);
+            await sendNotify({
+            title:'BWG流量警报🌙',
+            message:alertMsg,
+            priority: 3 ,
+            tags: ['warning', 'loudspeaker']
+        })
         } else {
-            debugLog(`正常：当前流量 ${todayTotalMB} MB，未达阈值。`);
+            debugLog(`正常：当前流量 ${todayTotalGB} GB，未达阈值。`);
         }
     }
     
@@ -228,7 +243,7 @@ schedule.scheduleJob("59 23 * * *", () => {
 // 启动提示
 console.log(`[I] 流量监控服务已启动！`);
 console.log(`[I] 当前模式: ${CONFIG.debugMode ? 'DEBUG (输出详细信息)' : 'PRODUCTION (仅关键信息)'}`);
-console.log(`[I] 监控网口: ${CONFIG.netName} | 报警阈值: ${CONFIG.dailyLimitMB} MB`);
+console.log(`[I] 监控网口: ${CONFIG.netName} | 报警阈值: ${CONFIG.dailyLimitGB} GB`);
 
 // 如果是调试模式，启动时立即跑一遍，方便查看网口列表和连通性
 if (CONFIG.debugMode) {

@@ -1,0 +1,5 @@
+定位到本目录，执行npm install 安装依赖
+然后 node server 测试程序
+测试正常用ctrl+c关闭程序。
+之后用pm2 start server.js -n msgcenter 启动，
+并用pm2 save保存

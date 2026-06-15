@@ -12,6 +12,9 @@ const path = require('path');
 const fs = require('fs');
 const execAsync = util.promisify(exec);
 
+//引入消息发送模块：
+const { sendNotify, NOTIFY_CONFIG } = require('../sendNotify/sendNotify.js');
+
 // ========== 配置区域 , 非常重要 ，请认真修改 ==========
 const CONFIG = {
     // 检测目标：设置 IP 及其别名（不要检测本机的Zerotier IP！）
@@ -27,12 +30,13 @@ const CONFIG = {
     containerName: 'ZeroTier',
     
     // ntfy 配置
-    ntfy: {
+    // 使用了const { sendNotify, NOTIFY_CONFIG } = require('../sendNotify/sendNotify.js')消息模块，本处可删除
+    /*ntfy: {
         topic: 'hotine',                // 替换为你的 ntfy topic
         server: 'https://ntfy.sh',      // ntfy 服务器地址
         priority: 'high',                // 优先级
         timeout: 10
-    },
+    },*/
     
     // 主机标识
     hostname: 'NAS100',
@@ -131,7 +135,7 @@ async function restartContainer() {
 }
 
 // ========== 发送 ntfy 通知 (增加超时防护) ==========
-async function sendNtfy(message, tags = ['computer'], priority = CONFIG.ntfy.priority) {
+/*async function sendNtfy(message, tags = ['computer'], priority = CONFIG.ntfy.priority) {
     const title = `${CONFIG.hostname} 网络监控`;
     try {
         // 优化点：增加了 --max-time 参数，防止发送通知时由于网络不可达导致脚本死锁
@@ -147,7 +151,7 @@ async function sendNtfy(message, tags = ['computer'], priority = CONFIG.ntfy.pri
     } catch (error) {
         log(`[通知] ntfy 发送错误或超时: ${error.message}`);
     }
-}
+}*/
 
 // ========== 延迟函数 ==========
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -177,19 +181,32 @@ async function main() {
 
     log('🚨 确认: 连续两次检测全部失败，准备重启容器并发送通知。');
     
-    // 即使这里 ntfy 出现网络超时，也会在 10 秒内强制断开并继续执行下面的重启逻辑
-    await sendNtfy(
+    // 发送通知
+    /*await sendNtfy(
         `🚨 ${CONFIG.hostname} 已离线\n` +
         `经过5分钟复测仍不通：\n${secondCheck.details}\n` +
         `正在尝试重启容器 ${CONFIG.containerName}...`,
         ['warning', 'skull'],
         'urgent'
-    );
+    );*/
+    await sendNotify({
+        title: `🚨Zerotire检测异常`,
+        message: `${CONFIG.hostname} 已离线\n`+ `且经过5分钟复测仍不通：\n${secondCheck.details}\n` + `正在尝试重启容器 ${CONFIG.containerName}...`,
+        priority: 2,
+        tags: ['warning', 'skull']
+    });
+
 
     const restartSuccess = await restartContainer();
 
     if (!restartSuccess) {
-        await sendNtfy(`❌ ${CONFIG.hostname} 容器重启命令执行失败！请人工处理。`, ['x', 'fire'], 'urgent');
+        //await sendNtfy(`❌ ${CONFIG.hostname} 容器重启命令执行失败！请人工处理。`, ['x', 'fire'], 'urgent');
+        await sendNotify({
+            title: `❌Zerotire检测异常`,
+            message: `${CONFIG.hostname} 上容器 ${CONFIG.containerName} 重启命令执行失败！请人工处理。`,
+            priority: 3,
+            tags: ['x', 'fire']
+        });
         return;
     }
 
@@ -199,20 +216,32 @@ async function main() {
     const finalCheck = await checkAllTargets();
 
     if (finalCheck.allFailed) {
-        await sendNtfy(
+        /*await sendNtfy(
             `❌ ${CONFIG.hostname} 重启容器后依然无法连接！\n` +
             `检测详情:\n${finalCheck.details}`,
             ['heavy_exclamation_mark', 'sos'],
             'urgent'
-        );
+        );*/
+        await sendNotify({
+            title: `❌Zerotire检测异常`,
+            message:  `❌ ${CONFIG.hostname} 重启容器后依然无法连接！\n` + `检测详情:\n${finalCheck.details}`,
+            priority: 3,
+            tags: ['heavy_exclamation_mark', 'sos']
+        });
         log('最终状态: 依然不通，可能存在物理网络或配置故障。');
     } else {
-        await sendNtfy(
+        /*await sendNtfy(
             `✅ ${CONFIG.hostname} 已恢复正常\n` +
             `重启容器后检测结果:\n${finalCheck.details}`,
             ['white_check_mark', 'tada'],
             'default'
-        );
+        );*/
+        await sendNotify({
+            title: `✅Zerotire修复完成`,
+            message: `✅ ${CONFIG.hostname} 已恢复正常\n` + `重启容器后检测结果:\n${finalCheck.details}`,
+            priority: 2,
+            tags: ['white_check_mark', 'tada']
+        });
         log('最终状态: 已恢复正常。');
     }
 

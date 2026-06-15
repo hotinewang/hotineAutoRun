@@ -1,0 +1,10 @@
+# 忽略名为 node_modules 的文件夹（无论它在项目根目录还是子目录下）
+node_modules/
+
+# 如果你只想忽略项目根目录下的某个特定的 my-logs 文件夹
+/my-logs/
+
+# 常见的需要忽略的第三方依赖或编译输出文件夹
+node_modules/
+dist/
+.env
