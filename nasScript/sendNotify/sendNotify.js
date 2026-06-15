@@ -1,7 +1,20 @@
 /**
  * 推送配置中心
  * v2026.06.15
- */
+*/
+
+// ==================== 强力清道夫代码(屏蔽系统代理) (加在 sendNotify.js 最顶行) ====================
+if (typeof process !== 'undefined' && process.env) {
+    process.env.HTTP_PROXY = '';
+    process.env.HTTPS_PROXY = '';
+    process.env.http_proxy = '';
+    process.env.https_proxy = '';
+    // 如果你使用的是 global-agent 等第三方库，这也能强行切断
+    process.env.GLOBAL_AGENT_HTTP_PROXY = ''; 
+}
+// ===================================================================================
+
+
 const NOTIFY_CONFIG = {
     timeout: 20000, // 全局超时（毫秒）
 
