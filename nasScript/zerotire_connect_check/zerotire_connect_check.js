@@ -17,17 +17,20 @@ const { sendNotify, NOTIFY_CONFIG } = require('../sendNotify/sendNotify.js');
 
 // ========== 配置区域 , 非常重要 ，请认真修改 ==========
 const CONFIG = {
+    // 主机标识（发送通知时显示）
+    hostname: 'NAS100',
+
+    // Docker 容器名称（实际运行的docker容器的名称。用于网络异常时重启这个容器）
+    containerName: 'ZeroTier',
+
     // 检测目标：设置 IP 及其别名（不要检测本机的Zerotier IP！）
     targets: [
-        //{ ip: '192.168.193.254', alias: '错误设备' }
+        //{ ip: '192.168.193.254', alias: '不存在的设备' },
         //{ ip: '192.168.193.1', alias: 'NAS100' },
         { ip: '192.168.193.2', alias: 'BWG服务器' },
         { ip: '192.168.193.4', alias: 'MINI-NAS' },
         { ip: '192.168.193.8', alias: 'QX-N1盒子' }
     ],
-    
-    // Docker 容器名称
-    containerName: 'ZeroTier',
     
     // ntfy 配置
     // 使用了const { sendNotify, NOTIFY_CONFIG } = require('../sendNotify/sendNotify.js')消息模块，本处可删除
@@ -37,9 +40,7 @@ const CONFIG = {
         priority: 'high',                // 优先级
         timeout: 10
     },*/
-    
-    // 主机标识
-    hostname: 'NAS100',
+
     
     // ping 配置
     pingCount: 3,                      // 同一IP地址PING的次数
@@ -55,6 +56,7 @@ const CONFIG = {
         console: true
     }
 };
+// ========== 配置区域结束========================================
 
 // ========== 初始化日志路径 ==========
 function getLogFilePath() {
