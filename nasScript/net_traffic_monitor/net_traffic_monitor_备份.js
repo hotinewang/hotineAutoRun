@@ -85,7 +85,7 @@ function getLogFilePath() {
 }
 
 /**
- * 将当前流量快照写入日志（完全使用 UTC 时间）
+ * 将当前流量快照写入日志
  */
 function logTraffic(trafficData) {
     if (!trafficData || trafficData.length < 1) return;
@@ -93,7 +93,7 @@ function logTraffic(trafficData) {
     // 格式: YYYY-MM-DD HH:mm:ss RX TX
     const logEntry = `${now.toISOString().slice(0, 19).replace('T', ' ')} ${trafficData[0][1]} ${trafficData[0][2]}\n`;
     fs.appendFileSync(getLogFilePath(), logEntry);
-    debugLog("已成功写入当前流量快照到日志(UTC)。");
+    debugLog("已成功写入当前流量快照到日志。");
 }
 
 /**
@@ -125,10 +125,9 @@ function calculateTrafficStats() {
     }
 
     // 2. 月度统计：从本月（或上月）28日开始
-    const utcDate = now.getUTCDate();
-    const targetDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 28));
-    if (utcDate < 28) {
-        targetDay.setUTCMonth(targetDay.getUTCMonth() - 1);
+    const targetDay = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 28));
+    if (now.getDate() < 28) {
+        targetDay.setMonth(targetDay.getMonth() - 1);
     }
     const targetDateStr = targetDay.toISOString().substring(0, 10);
     
@@ -237,8 +236,8 @@ schedule.scheduleJob("1 * * * *", () => {
     main(false);
 });
 
-// 2. 每天北京时间 07:59（对应 UTC 时间 23:59）：发送当日最终汇总
-schedule.scheduleJob("59 7 * * *", () => {
+// 2. 每天的 23:59：发送当日最终汇总
+schedule.scheduleJob("59 23 * * *", () => {
     main(true);
 });
 
