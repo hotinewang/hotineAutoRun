@@ -195,7 +195,7 @@ async function main(isEndOfDay = false) {
 
     // 构造通用报告文本
     let report = `当日累计: ${todayTotalGB} GB (↑${bytesToGB(stats.todaySent)} / ↓${bytesToGB(stats.todayReceived)})\n`;
-    report += `月度累计: ${monthlyTotalGB} GB (${(monthlyTotalGB / 1000).toFixed(3)*100}%,28日重置)`;
+    report += `月度累计: ${monthlyTotalGB} GB (${((monthlyTotalGB / 1000) * 100).toFixed(1)}%,28日重置)`;
 
     // 分支 1: 日终汇总报告 (23:59 发送)
     if (isEndOfDay) {
